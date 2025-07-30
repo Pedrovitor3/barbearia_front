@@ -1,0 +1,15 @@
+.click-card {
+  cursor: pointer;
+  will-change: transform, box-shadow;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  transform-origin: center;
+}
+
+.click-card:hover {
+  transform: translateY(-2px);
+}
+
+.click-card:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
