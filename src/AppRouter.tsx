@@ -25,6 +25,7 @@ import {
 import { useState } from 'react';
 import Barbearia from './pages/Barbearia';
 import Home from './pages/home';
+import Perfil from './pages/Perfil';
 
 const { Header, Content, Sider } = Layout;
 const { Title } = Typography;
@@ -187,7 +188,7 @@ const AppRouter = () => {
                     path="/agendamentos"
                     element={<div>Página de Agendamentos</div>}
                   />
-                  <Route path="/perfil" element={<div>Página de Perfil</div>} />
+                  <Route path="/perfil" element={<Perfil />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </div>
