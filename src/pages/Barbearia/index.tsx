@@ -1,8 +1,10 @@
-import { Calendar, Card, Tag, Typography, Divider, Button } from 'antd';
+import { Calendar, Card, Tag, Typography, Divider, Button, Select } from 'antd';
 import {
   CalendarOutlined,
   ClockCircleOutlined,
   UserOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import type { CalendarProps } from 'antd';
 import type { Dayjs } from 'dayjs';
@@ -15,6 +17,7 @@ const { Title, Text } = Typography;
 
 const Barbearia = () => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [currentDate, setCurrentDate] = useState(dayjs());
 
   // Dados fictícios dos agendamentos
   const agendamentos = [
@@ -114,6 +117,85 @@ const Barbearia = () => {
     return null;
   };
 
+  // Header customizado para mostrar apenas navegação por mês
+  const headerRender: CalendarProps<Dayjs>['headerRender'] = ({
+    value,
+    onChange,
+  }) => {
+    const months = [
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
+    ];
+
+    const currentMonth = value.month();
+    const currentYear = value.year();
+
+    const goToPreviousMonth = () => {
+      const newDate = value.subtract(1, 'month');
+      setCurrentDate(newDate);
+      onChange(newDate);
+    };
+
+    const goToNextMonth = () => {
+      const newDate = value.add(1, 'month');
+      setCurrentDate(newDate);
+      onChange(newDate);
+    };
+
+    const handleMonthChange = (month: number) => {
+      const newDate = value.month(month);
+      setCurrentDate(newDate);
+      onChange(newDate);
+    };
+
+    return (
+      <div
+        style={{
+          padding: '0 16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid #f0f0f0',
+          marginBottom: '16px',
+        }}
+      >
+        <Button
+          type="text"
+          icon={<LeftOutlined />}
+          onClick={goToPreviousMonth}
+        />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Select
+            value={currentMonth}
+            onChange={handleMonthChange}
+            style={{ width: 120 }}
+            size="small"
+          >
+            {months.map((month, index) => (
+              <Select.Option key={index} value={index}>
+                {month}
+              </Select.Option>
+            ))}
+          </Select>
+          <Text strong>{currentYear}</Text>
+        </div>
+
+        <Button type="text" icon={<RightOutlined />} onClick={goToNextMonth} />
+      </div>
+    );
+  };
+
   const dataAtual = dayjs().format('YYYY-MM-DD');
   const agendamentosHoje = getAgendamentosPorData(dataAtual);
   const horariosLivresHoje = getHorariosLivres(dataAtual);
@@ -123,7 +205,7 @@ const Barbearia = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: '0px' }}>
       <Title level={2}>Barbearia do Jô</Title>
       <Text type="secondary">Cidade Jardim - Goiânia</Text>
 
@@ -137,18 +219,23 @@ const Barbearia = () => {
       </Button>
       <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
         {/* Calendário */}
-        <div style={{ flex: 1, minWidth: '300px' }}>
-          <Calendar onSelect={onSelect} dateCellRender={dataCellRender} />
+        <div style={{ flex: 1, minWidth: '300px', margin: '10px 0px' }}>
+          <Calendar
+            value={currentDate}
+            onSelect={onSelect}
+            dateCellRender={dataCellRender}
+            headerRender={headerRender}
+          />
         </div>
 
         {/* Informações do dia atual */}
         <div style={{ flex: 1, minWidth: '300px' }}>
-          <Card title="Agendamentos de Hoje" style={{ marginBottom: '16px' }}>
+          <Card title="Agendamentos de Hoje" style={{ margin: '12px 0' }}>
             {agendamentosHoje.length > 0 ? (
               agendamentosHoje.map(agendamento => (
                 <Card.Grid
                   key={agendamento.id}
-                  style={{ width: '100%', padding: '12px' }}
+                  style={{ width: '100%', padding: '10px' }}
                 >
                   <div
                     style={{
@@ -173,7 +260,7 @@ const Barbearia = () => {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '8px',
-                          marginTop: '4px',
+                          marginTop: '2px',
                         }}
                       >
                         <UserOutlined />

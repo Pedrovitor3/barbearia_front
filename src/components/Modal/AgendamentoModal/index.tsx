@@ -20,10 +20,9 @@ import {
   DollarOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import type { Servico } from '../../interfaces/ServicoInterface';
-import type { FormValues } from '../../interfaces/FormData';
-import type { AgendamentoInterface } from '../../interfaces/AgendamentoInterface';
-
+import type { AgendamentoInterface } from '../../../interfaces/AgendamentoInterface';
+import type { Servico } from '../../../interfaces/ServicoInterface';
+import type { FormValues } from '../../../interfaces/FormData';
 const { Text } = Typography;
 const { Option } = Select;
 
