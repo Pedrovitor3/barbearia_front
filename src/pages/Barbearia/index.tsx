@@ -8,7 +8,7 @@ import type { CalendarProps } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useState } from 'react';
-import AgendamentoModal from '../../components/AgendamentoModal';
+import AgendamentoModal from '../../components/Modal/AgendamentoModal';
 import type { AgendamentoInterface } from '../../interfaces/AgendamentoInterface';
 
 const { Title, Text } = Typography;

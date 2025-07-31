@@ -20,8 +20,8 @@
     "prettier"
   ],
   "rules": {
-    // Desabilitar regra do 'any' se necessário (não recomendado)
-    "@typescript-eslint/no-explicit-any": "warn",
+    // Desabilitar regra do 'any' - DESATIVADO
+    "@typescript-eslint/no-explicit-any": "off",
     // Configurar regra de variáveis não utilizadas
     "@typescript-eslint/no-unused-vars": [
       "error",
@@ -35,6 +35,7 @@
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-empty-function": "warn",
+    // Prettier
     "prettier/prettier": "error"
   }
 }
