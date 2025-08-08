@@ -1,6 +1,6 @@
 // utils/apiClient.ts
 
-import { authService } from "../services/login";
+import { authService } from '../services/login';
 
 export interface ApiResponse<T = any> {
   data: T;
@@ -23,7 +23,9 @@ class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`);
+        throw new Error(
+          errorData.message || `Erro ${response.status}: ${response.statusText}`
+        );
       }
 
       const data = await response.json();
@@ -78,7 +80,10 @@ class ApiClient {
   }
 
   // Upload de arquivos
-  async upload<T = any>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+  async upload<T = any>(
+    endpoint: string,
+    formData: FormData
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: formData,

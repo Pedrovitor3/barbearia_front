@@ -1,158 +1,164 @@
-// contexts/AuthContext.tsx
-import React, { createContext, useContext, useReducer, useEffect, type ReactNode,  } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from 'react';
 import { message } from 'antd';
-import { authService, type LoginCredentials, type RegisterCredentials, type User } from '../services/login';
+import type { UserInterface } from '../interfaces/UserInterface';
+import { sistemaName } from '../config/sistemaConfig';
+import { urlsServices } from '../config/urlsConfig';
+import { useAxiosToken } from '../hooks/useApi';
 
-interface AuthState {
-  user: User | null;
+export type AuthContextType = {
+  user: UserInterface | null;
+  validado: boolean;
   isLoading: boolean;
-  isAuthenticated: boolean;
-}
-
-interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<boolean>;
-  register: (credentials: RegisterCredentials) => Promise<boolean>;
-  logout: () => Promise<void>;
-  checkAuth: () => Promise<void>;
-}
-
-type AuthAction =
-  | { type: 'AUTH_START' }
-  | { type: 'AUTH_SUCCESS'; payload: User }
-  | { type: 'AUTH_FAILURE' }
-  | { type: 'LOGOUT' };
-
-const initialState: AuthState = {
-  user: null,
-  isLoading: true,
-  isAuthenticated: false,
+  setUserSSO: (us: UserInterface | null) => void;
+  logoutSSO: () => Promise<void>;
 };
 
-const authReducer = (state: AuthState, action: AuthAction): AuthState => {
-  switch (action.type) {
-    case 'AUTH_START':
-      return {
-        ...state,
-        isLoading: true,
-      };
-    case 'AUTH_SUCCESS':
-      return {
-        ...state,
-        user: action.payload,
-        isLoading: false,
-        isAuthenticated: true,
-      };
-    case 'AUTH_FAILURE':
-      return {
-        ...state,
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-      };
-    case 'LOGOUT':
-      return {
-        ...state,
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-      };
-    default:
-      return state;
+export const AuthContext = createContext<AuthContextType | null>(null);
+
+// Função utilitária para extrair parâmetro da URL
+const getParameterUrl = (param: string): string | null => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
+};
+
+// Classe utilitária para preparar dados do usuário
+class AuthUtils {
+  static prepareDataUser(data: any): UserInterface {
+    return {
+      token: data.access_token,
+      usuarioId: data.usuario.usuarioId,
+      username: data.usuario.username,
+      pessoa: {
+        pessoaId: data.usuario.pessoa.pessoaId,
+        cpf: data.usuario.pessoa.cpf,
+        nome: data.usuario.pessoa.nome,
+        sobrenome: data.usuario.pessoa.sobrenome,
+        dataNascimento: data.usuario.pessoa.dataNascimento,
+        sexo: data.usuario.pessoa.sexo,
+      },
+      funcionarios: data.usuario.funcionarios,
+      clientes: data.usuario.clientes,
+      administradores: data.usuario.administradores,
+    };
   }
-};
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const apiAxios = useAxiosToken();
+  const [user, setUser] = useState<UserInterface | null>(null);
+  const [validado, setValidado] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const validaToken = async (token: string) => {
+    try {
+      setIsLoading(true);
+      const res = await apiAxios.validaToken(token);
+      const userValidation = AuthUtils.prepareDataUser(res.data);
+
+      localStorage.setItem('token_sso', token);
+      setUser(userValidation);
+      setValidado(true);
+    } catch (err) {
+      console.error('Erro ao validar token:', err);
+      setUser(null);
+      setValidado(false);
+      localStorage.removeItem('token_sso');
+
+      message.error({
+        content: 'Erro ao tentar validar seu token! Você será redirecionado.',
+        duration: 5,
+      });
+
+      // Aguarda a mensagem ser exibida antes de redirecionar
+      setTimeout(() => {
+        redirectToAuth();
+      }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const redirectToAuth = () => {
+    const currentUrl = window.location.href
+      .replace('#', '|')
+      .split('/?access_token')[0];
+
+    window.location.href = `${urlsServices.FRONTEND}auth?response_type=token_only&client_id=${sistemaName}&redirect_uri=${encodeURIComponent(currentUrl)}`;
+  };
+
+  const setUserSSO = (us: UserInterface | null) => {
+    setUser(us);
+    if (us) {
+      setValidado(true);
+    }
+  };
+
+  const logoutSSO = async (): Promise<void> => {
+    try {
+      await apiAxios.logout();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    } finally {
+      setUser(null);
+      setValidado(false);
+      localStorage.removeItem('token_sso');
+      redirectToAuth();
+    }
+  };
+
+  // useEffect para gerenciar a autenticação inicial
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const tokenStorage = localStorage.getItem('token_sso');
+      const tokenParam = getParameterUrl('access_token');
+
+      if (tokenStorage && tokenStorage.trim() !== '') {
+        // Se já tem um usuário válido com o mesmo token, não revalida
+        if (user?.token === tokenStorage) {
+          setIsLoading(false);
+          return;
+        }
+        await validaToken(tokenStorage);
+      } else if (tokenParam) {
+        await validaToken(tokenParam);
+        // Remove o token da URL após processar
+        const url = new URL(window.location.href);
+        url.searchParams.delete('access_token');
+        window.history.replaceState({}, document.title, url.toString());
+      } else {
+        setIsLoading(false);
+        redirectToAuth();
+      }
+    };
+
+    initializeAuth();
+  }, []); // Executa apenas uma vez na montagem do componente
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        validado,
+        isLoading,
+        setUserSSO,
+        logoutSSO,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-
-  // Verificar autenticação ao inicializar
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async (): Promise<void> => {
-    dispatch({ type: 'AUTH_START' });
-
-    try {
-      const user = await authService.getCurrentUser();
-      if (user) {
-        dispatch({ type: 'AUTH_SUCCESS', payload: user });
-      } else {
-        dispatch({ type: 'AUTH_FAILURE' });
-      }
-    } catch (error) {
-      dispatch({ type: 'AUTH_FAILURE' });
-    }
-  };
-
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
-    dispatch({ type: 'AUTH_START' });
-
-    try {
-      const response = await authService.login(credentials);
-      dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
-
-      message.success('Login realizado com sucesso!');
-      return true;
-    } catch (error) {
-      dispatch({ type: 'AUTH_FAILURE' });
-
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer login';
-      message.error(errorMessage);
-      return false;
-    }
-  };
-
-  const register = async (credentials: RegisterCredentials): Promise<boolean> => {
-    dispatch({ type: 'AUTH_START' });
-
-    try {
-      const response = await authService.register(credentials);
-      dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
-
-      message.success('Registro realizado com sucesso!');
-      return true;
-    } catch (error) {
-      dispatch({ type: 'AUTH_FAILURE' });
-
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao registrar usuário';
-      message.error(errorMessage);
-      return false;
-    }
-  };
-
-  const logout = async (): Promise<void> => {
-    try {
-      await authService.logout();
-      dispatch({ type: 'LOGOUT' });
-      message.success('Logout realizado com sucesso!');
-    } catch (error) {
-      // Mesmo com erro, fazer logout local
-      dispatch({ type: 'LOGOUT' });
-      console.error('Erro ao fazer logout:', error);
-    }
-  };
-
-  const value: AuthContextType = {
-    ...state,
-    login,
-    register,
-    logout,
-    checkAuth,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -1,6 +1,7 @@
 import { domainNameProd, domainNameDesv } from './sistemaConfig';
 export const urlsServices = {
   BACKENDWS: 'URLBACKENDPROD',
+  FRONTEND: 'URLFRontend',
 };
 export let ambiente = '';
 
