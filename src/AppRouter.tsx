@@ -1,4 +1,4 @@
-// AppRouter.tsx - Versão atualizada com temas customizados
+// AppRouter.tsx - Versão atualizada com autenticação
 import {
   BrowserRouter as Router,
   Routes,
@@ -16,15 +16,13 @@ import {
   ConfigProvider,
   Avatar,
   Dropdown,
-  message,
+  Spin,
 } from 'antd';
 import {
   HomeOutlined,
   ScissorOutlined,
   CalendarOutlined,
   UserOutlined,
-  MenuOutlined,
-  BulbOutlined,
   LogoutOutlined,
   SettingOutlined,
   MoonOutlined,
@@ -34,12 +32,48 @@ import { useState, useEffect } from 'react';
 import Barbearia from './pages/Barbearia';
 import Home from './pages/home';
 import Perfil from './pages/Perfil';
+import Login from './pages/Login';
 import { darkTheme, lightTheme, type AppThemeMode } from './theme';
 import { useAuth } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectRoute';
 
 const { Header, Content, Sider } = Layout;
 const { Title } = Typography;
+
+// Componente de Loading
+const LoadingPage = () => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      flexDirection: 'column',
+      gap: 16,
+    }}
+  >
+    <Spin size="large" />
+    <span>Carregando...</span>
+  </div>
+);
+
+// Componente para rotas protegidas
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingPage />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 interface AppLayoutProps {
   themeMode: AppThemeMode;
@@ -48,8 +82,8 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const { user, logout } = useAuth();
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const isDarkMode = themeMode === 'dark';
   const currentTheme = isDarkMode ? darkTheme : lightTheme;
@@ -99,13 +133,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
     window.location.href = key;
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      message.success('Logout realizado com sucesso!');
-    } catch (error) {
-      message.error('Erro ao fazer logout');
-    }
+  const handleLogout = () => {
+    logout();
   };
 
   // Items do dropdown do usuário
@@ -114,7 +143,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
       key: 'profile',
       icon: <UserOutlined />,
       label: 'Meu Perfil',
-      onClick: () => window.location.href = '/perfil',
+      onClick: () => (window.location.href = '/perfil'),
     },
     {
       key: 'settings',
@@ -132,14 +161,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
     },
   ];
 
-  // Recuperar preferências do tema
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('themeMode') as AppThemeMode;
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-      // O tema já foi carregado no componente pai
-    }
-  }, []);
-
   // Determinar a chave selecionada do menu baseada na rota atual
   const getSelectedKeys = () => {
     const pathname = location.pathname;
@@ -147,6 +168,20 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
       return [pathname];
     }
     return [pathname];
+  };
+
+  // Obter nome do usuário
+  const getUserName = () => {
+    if (!user) return 'Usuário';
+    return `${user.pessoa.nome} ${user.pessoa.sobrenome}`;
+  };
+
+  // Obter iniciais do usuário para avatar
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    const nome = user.pessoa.nome.charAt(0);
+    const sobrenome = user.pessoa.sobrenome.charAt(0);
+    return `${nome}${sobrenome}`.toUpperCase();
   };
 
   return (
@@ -164,7 +199,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
         >
           <div
             style={{
-              height: currentTheme.components?.Layout?.headerHeight || 64,
+              height: 64,
               display: 'flex',
               alignItems: 'center',
               justifyContent: collapsed ? 'center' : 'flex-start',
@@ -212,7 +247,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              height: currentTheme.components?.Layout?.headerHeight || 64,
+              height: 64,
             }}
           >
             <Space>
@@ -244,7 +279,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
               >
                 <SunOutlined
                   style={{
-                    color: isDarkMode ? '#64748b' : currentTheme.token.colorPrimary,
+                    color: isDarkMode
+                      ? '#64748b'
+                      : currentTheme.token.colorPrimary,
                     fontSize: 14,
                   }}
                 />
@@ -257,7 +294,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
                 />
                 <MoonOutlined
                   style={{
-                    color: isDarkMode ? currentTheme.token.colorPrimary : '#64748b',
+                    color: isDarkMode
+                      ? currentTheme.token.colorPrimary
+                      : '#64748b',
                     fontSize: 14,
                   }}
                 />
@@ -279,17 +318,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
                   <Space>
                     <Avatar
                       size="small"
-                      src={user?.avatar}
-                      icon={!user?.avatar && <UserOutlined />}
                       style={{
                         backgroundColor: currentTheme.token.colorPrimary,
                       }}
-                    />
-                    <span style={{
-                      color: currentTheme.token.colorTextBase,
-                      fontWeight: 500,
-                    }}>
-                      {user?.name || 'Usuário'}
+                    >
+                      {getUserInitials()}
+                    </Avatar>
+                    <span
+                      style={{
+                        color: currentTheme.token.colorTextBase,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {getUserName()}
                     </span>
                   </Space>
                 </Button>
@@ -316,13 +357,26 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
               }}
             >
               <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/barbearia/:id" element={<Barbearia />} />
-                <Route
-                  path="/agendamentos"
-                  element={<div>Página de Agendamentos</div>}
-                />
-                <Route path="/perfil" element={<Perfil />} />
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Home />
+                  </ProtectedRoute>
+                } />
+                <Route path="/barbearia/:id" element={
+                  <ProtectedRoute>
+                    <Barbearia />
+                  </ProtectedRoute>
+                } />
+                <Route path="/agendamentos" element={
+                  <ProtectedRoute>
+                    <div>Página de Agendamentos</div>
+                  </ProtectedRoute>
+                } />
+                <Route path="/perfil" element={
+                  <ProtectedRoute>
+                    <Perfil />
+                  </ProtectedRoute>
+                } />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
@@ -352,12 +406,16 @@ const AppRouter = () => {
 
   return (
     <Router>
-      <ProtectedRoute
-        isDarkMode={themeMode === 'dark'}
-        toggleTheme={toggleTheme}
-      >
-        <AppLayout themeMode={themeMode} toggleTheme={toggleTheme} />
-      </ProtectedRoute>
+      <Routes>
+        <Route
+          path="/login"
+          element={<Login isDarkMode={themeMode === 'dark'} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/*"
+          element={<AppLayout themeMode={themeMode} toggleTheme={toggleTheme} />}
+        />
+      </Routes>
     </Router>
   );
 };

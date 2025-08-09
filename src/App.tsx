@@ -1,4 +1,4 @@
-// App.tsx - Versão atualizada com AuthProvider e tema customizado
+// App.tsx - Versão atualizada com AuthProvider
 import { ConfigProvider } from 'antd';
 import ptBR from 'antd/locale/pt_BR';
 import AppRouter from './AppRouter';

@@ -1,164 +1,242 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  type ReactNode,
-} from 'react';
+// contexts/AuthContext.tsx
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { message } from 'antd';
-import type { UserInterface } from '../interfaces/UserInterface';
-import { sistemaName } from '../config/sistemaConfig';
-import { urlsServices } from '../config/urlsConfig';
-import { useAxiosToken } from '../hooks/useApi';
+import { LoginService } from '../services/loginService';
 
-export type AuthContextType = {
-  user: UserInterface | null;
-  validado: boolean;
-  isLoading: boolean;
-  setUserSSO: (us: UserInterface | null) => void;
-  logoutSSO: () => Promise<void>;
-};
-
-export const AuthContext = createContext<AuthContextType | null>(null);
-
-// Função utilitária para extrair parâmetro da URL
-const getParameterUrl = (param: string): string | null => {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
-};
-
-// Classe utilitária para preparar dados do usuário
-class AuthUtils {
-  static prepareDataUser(data: any): UserInterface {
-    return {
-      token: data.access_token,
-      usuarioId: data.usuario.usuarioId,
-      username: data.usuario.username,
-      pessoa: {
-        pessoaId: data.usuario.pessoa.pessoaId,
-        cpf: data.usuario.pessoa.cpf,
-        nome: data.usuario.pessoa.nome,
-        sobrenome: data.usuario.pessoa.sobrenome,
-        dataNascimento: data.usuario.pessoa.dataNascimento,
-        sexo: data.usuario.pessoa.sexo,
-      },
-      funcionarios: data.usuario.funcionarios,
-      clientes: data.usuario.clientes,
-      administradores: data.usuario.administradores,
-    };
-  }
+interface Pessoa {
+  pessoaId: number;
+  cpf: string;
+  nome: string;
+  sobrenome: string;
+  dataNascimento: string;
+  sexo: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
 }
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const apiAxios = useAxiosToken();
-  const [user, setUser] = useState<UserInterface | null>(null);
-  const [validado, setValidado] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+interface Empresa {
+  empresaId: number;
+  nomeFantasia: string;
+  slug: string;
+  razaoSocial: string;
+  cnpj: string;
+  telefone: string | null;
+  email: string | null;
+  website: string | null;
+  ativo: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
 
-  const validaToken = async (token: string) => {
+interface Funcionario {
+  funcionarioId: number;
+  pessoaId: number;
+  empresaId: number;
+  cargo: string;
+  salario: number | null;
+  dataAdmissao: string;
+  dataDemissao: string | null;
+  ativo: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  empresa: Empresa;
+}
+
+interface Cliente {
+  clienteId: number;
+  pessoaId: number;
+  empresaId: number;
+  // adicione outros campos conforme necessário
+}
+
+interface Administrador {
+  administradorId: number;
+  pessoaId: number;
+  // adicione outros campos conforme necessário
+}
+
+interface Usuario {
+  usuarioId: number;
+  pessoaId: number;
+  username: string;
+  senhaHash: string;
+  ultimoLogin: string | null;
+  ativo: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  pessoa: Pessoa;
+  clientes: Cliente[];
+  funcionarios: Funcionario[];
+  administradores: Administrador[];
+}
+
+interface LoginResponse {
+  access_token: string;
+  usuario: Usuario;
+}
+
+interface AuthContextType {
+  user: Usuario | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (username: string, password: string) => Promise<boolean>;
+  logout: () => void;
+  updateUser: (userData: Partial<Usuario>) => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<Usuario | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Verificar se existe token salvo ao inicializar
+  useEffect(() => {
+    const savedToken = localStorage.getItem('auth_token');
+    const savedUser = localStorage.getItem('auth_user');
+
+    if (savedToken && savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setToken(savedToken);
+        setUser(parsedUser);
+
+        // Verificar se o token ainda é válido (opcional)
+        validateToken(savedToken).then(isValid => {
+          if (!isValid) {
+            logout();
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao recuperar dados de autenticação:', error);
+        logout();
+      }
+    }
+
+    setIsLoading(false);
+  }, []);
+
+  // Função para validar token (opcional - implementar conforme sua API)
+  const validateToken = async (token: string): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      const res = await apiAxios.validaToken(token);
-      const userValidation = AuthUtils.prepareDataUser(res.data);
-
-      localStorage.setItem('token_sso', token);
-      setUser(userValidation);
-      setValidado(true);
-    } catch (err) {
-      console.error('Erro ao validar token:', err);
-      setUser(null);
-      setValidado(false);
-      localStorage.removeItem('token_sso');
-
-      message.error({
-        content: 'Erro ao tentar validar seu token! Você será redirecionado.',
-        duration: 5,
+      // Fazer uma requisição para validar o token
+      // Implementar conforme sua API
+      const response = await fetch('/api/validate-token', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  };
 
-      // Aguarda a mensagem ser exibida antes de redirecionar
-      setTimeout(() => {
-        redirectToAuth();
-      }, 1000);
+  const login = async (username: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+
+    try {
+      // Simular chamada da API - substitua pela sua implementação real
+      const response = await LoginService(username, password)
+
+      if (!response) {
+        throw new Error('Credenciais inválidas');
+      }
+
+      const data: LoginResponse = response.data;
+
+      // Salvar no localStorage
+      localStorage.setItem('auth_token', data.access_token);
+      localStorage.setItem('auth_user', JSON.stringify(data.usuario));
+
+      // Atualizar estado
+      setToken(data.access_token);
+      setUser(data.usuario);
+
+      message.success('Login realizado com sucesso!');
+      return true;
+
+    } catch (error: any) {
+      message.error(error.message || 'Erro ao fazer login');
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const redirectToAuth = () => {
-    const currentUrl = window.location.href
-      .replace('#', '|')
-      .split('/?access_token')[0];
+  const logout = () => {
+    // Limpar localStorage
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
 
-    window.location.href = `${urlsServices.FRONTEND}auth?response_type=token_only&client_id=${sistemaName}&redirect_uri=${encodeURIComponent(currentUrl)}`;
+    // Limpar estado
+    setToken(null);
+    setUser(null);
+
+    message.success('Logout realizado com sucesso!');
+
+    // Redirecionar para login (opcional)
+    window.location.href = '/login';
   };
 
-  const setUserSSO = (us: UserInterface | null) => {
-    setUser(us);
-    if (us) {
-      setValidado(true);
+  const updateUser = (userData: Partial<Usuario>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('auth_user', JSON.stringify(updatedUser));
     }
   };
 
-  const logoutSSO = async (): Promise<void> => {
-    try {
-      await apiAxios.logout();
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    } finally {
-      setUser(null);
-      setValidado(false);
-      localStorage.removeItem('token_sso');
-      redirectToAuth();
-    }
+  const value: AuthContextType = {
+    user,
+    token,
+    isAuthenticated: !!token && !!user,
+    isLoading,
+    login,
+    logout,
+    updateUser,
   };
-
-  // useEffect para gerenciar a autenticação inicial
-  useEffect(() => {
-    const initializeAuth = async () => {
-      const tokenStorage = localStorage.getItem('token_sso');
-      const tokenParam = getParameterUrl('access_token');
-
-      if (tokenStorage && tokenStorage.trim() !== '') {
-        // Se já tem um usuário válido com o mesmo token, não revalida
-        if (user?.token === tokenStorage) {
-          setIsLoading(false);
-          return;
-        }
-        await validaToken(tokenStorage);
-      } else if (tokenParam) {
-        await validaToken(tokenParam);
-        // Remove o token da URL após processar
-        const url = new URL(window.location.href);
-        url.searchParams.delete('access_token');
-        window.history.replaceState({}, document.title, url.toString());
-      } else {
-        setIsLoading(false);
-        redirectToAuth();
-      }
-    };
-
-    initializeAuth();
-  }, []); // Executa apenas uma vez na montagem do componente
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        validado,
-        isLoading,
-        setUserSSO,
-        logoutSSO,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
+// Hook para usar o contexto
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (context === undefined) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
+};
+
+// HOC para proteger rotas
+export const withAuth = <P extends object>(Component: React.ComponentType<P>) => {
+  return (props: P) => {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+      return <div>Carregando...</div>; // ou um componente de loading
+    }
+
+    if (!isAuthenticated) {
+      window.location.href = '/login';
+      return null;
+    }
+
+    return <Component {...props} />;
+  };
 };
