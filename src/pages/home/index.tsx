@@ -1,23 +1,12 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Flex, Button, message, type UploadFile } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import barbeariaJoImg from '../../assets/BarbeariaImagens/barbeariaJo.png';
 import './index.css';
 import BarbeariaCard from '../../components/Card/BarbeariaCard';
 import ModalBarbearia from '../../components/Modal/BarbeariaModal';
-
-interface Barbearia {
-  id: string;
-  title: string;
-  bairro: string;
-  cidade: string;
-  image: string;
-  descricao: string;
-  barbeiros: string[];
-  telefone: string;
-  horarioFuncionamento: string;
-  preco: number;
-}
+import { GetEmpresaService } from '../../services/empresaService';
+import type { EmpresaInterface } from '../../interfaces/EmpresaInterface';
 
 interface BarbeariaFormData {
   nome: string;
@@ -35,92 +24,29 @@ const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedBarbearia, setSelectedBarbearia] = useState<Barbearia | null>(
-    null
-  );
+  // const [empresas, setEmpresas] = useState<EmpresaInterface[]>([]);
+  const [empresas, setEmpresas] = useState<any[]>([]);
+  const [selectedBarbearia, setSelectedBarbearia] =
+    useState<EmpresaInterface | null>(null);
 
-  const [barbearias, setBarbearias] = useState<Barbearia[]>([
-    {
-      id: 'jo',
-      title: 'Barbearia do Jô',
-      bairro: 'Cidade Jardim',
-      cidade: 'Goiânia',
-      image: barbeariaJoImg,
-      descricao: 'Barbearia tradicional com mais de 20 anos de experiência',
-      barbeiros: ['João', 'Carlos'],
-      telefone: '(62) 99999-9999',
-      horarioFuncionamento: '08:00 - 18:00',
-      preco: 25,
-    },
-    {
-      id: 'ze',
-      title: 'Barbearia do Zé',
-      bairro: 'Centro',
-      cidade: 'Goiânia',
-      image: barbeariaJoImg,
-      descricao: 'Cortes modernos e clássicos no coração da cidade',
-      barbeiros: ['José', 'Pedro'],
-      telefone: '(62) 88888-8888',
-      horarioFuncionamento: '09:00 - 19:00',
-      preco: 30,
-    },
-    {
-      id: 'rei',
-      title: 'Rei da Navalha',
-      bairro: 'Jardim América',
-      cidade: 'Goiânia',
-      image: barbeariaJoImg,
-      descricao: 'Especialistas em barba e bigode',
-      barbeiros: ['Roberto', 'Marcos'],
-      telefone: '(62) 77777-7777',
-      horarioFuncionamento: '08:30 - 18:30',
-      preco: 35,
-    },
-    {
-      id: 'elite',
-      title: 'Elite Barber',
-      bairro: 'Setor Sul',
-      cidade: 'Goiânia',
-      image: barbeariaJoImg,
-      descricao: 'Barbearia premium com atendimento VIP',
-      barbeiros: ['Anderson', 'Felipe'],
-      telefone: '(62) 66666-6666',
-      horarioFuncionamento: '10:00 - 20:00',
-      preco: 50,
-    },
-    {
-      id: 'central',
-      title: 'Barbearia Central',
-      bairro: 'Vila Nova',
-      cidade: 'Goiânia',
-      image: barbeariaJoImg,
-      descricao: 'Tradição familiar há 3 gerações',
-      barbeiros: ['Antonio', 'Francisco'],
-      telefone: '(62) 55555-5555',
-      horarioFuncionamento: '07:00 - 17:00',
-      preco: 20,
-    },
-    {
-      id: 'dois',
-      title: 'Dois Irmãos Barber',
-      bairro: 'Morada do Sol',
-      cidade: 'Goiânia',
-      image: barbeariaJoImg,
-      descricao: 'Irmãos unidos pela paixão em cortar cabelo',
-      barbeiros: ['Lucas', 'Mateus'],
-      telefone: '(62) 44444-4444',
-      horarioFuncionamento: '08:00 - 18:00',
-      preco: 28,
-    },
-  ]);
+  useEffect(() => {
+    // Carregar barbearias ao montar o componente
+    loadBarbearias();
+  }, []);
 
-  const handleOpenBarbearia = (id: string) => {
+  const loadBarbearias = async () => {
+    const response = await GetEmpresaService();
+    console.log('response', response);
+    setEmpresas(response);
+  };
+
+  const handleOpenBarbearia = (id: number) => {
     console.log('barbearia id', id);
     // Aqui você pode implementar navegação para página de detalhes
   };
 
-  const handleSettingsClick = (id: string) => {
-    const barbearia = barbearias.find(b => b.id === id);
+  const handleSettingsClick = (id: number) => {
+    const barbearia = empresas.find(b => b.empresaId === id);
     if (barbearia) {
       setSelectedBarbearia(barbearia);
       setIsEditing(true);
@@ -128,7 +54,7 @@ const Home = () => {
     }
   };
 
-  const handleMoreOptionsClick = (id: string) => {
+  const handleMoreOptionsClick = (id: number) => {
     console.log('Mais opções', id);
     // Aqui você pode implementar um dropdown com mais opções
     // como excluir, duplicar, etc.
@@ -146,7 +72,7 @@ const Home = () => {
     setSelectedBarbearia(null);
   };
 
-  const handleSubmitBarbearia = async (id: string, data: BarbeariaFormData) => {
+  const handleSubmitBarbearia = async (id: number, data: BarbeariaFormData) => {
     try {
       setLoading(true);
 
@@ -155,35 +81,33 @@ const Home = () => {
 
       if (isEditing && id) {
         // Atualizar barbearia existente
-        const barbeariaAtualizada: Barbearia = {
-          id,
-          title: data.nome,
-          descricao: data.descricao,
-          bairro: data.bairro,
-          cidade: data.cidade,
-          image:
-            data.imagem?.[0]?.url ||
-            data.imagem?.[0]?.thumbUrl ||
-            selectedBarbearia?.image ||
-            barbeariaJoImg,
-          barbeiros: data.barbeiros || [],
+        // const empresaAtualizada: EmpresaInterface = {
+        const empresaAtualizada: any = {
+          // empresaId,
+          nomeFantasia: data.nome,
+          email: data.descricao,
+          // bairro: data.bairro,
+          // cidade: data.cidade,
+          // image:
+          //   data.imagem?.[0]?.url ||
+          //   data.imagem?.[0]?.thumbUrl ||
+          //   selectedBarbearia?.image ||
+          //   barbeariaJoImg,
+          // barbeiros: data.barbeiros || [],
           telefone: data.telefone,
-          horarioFuncionamento: data.horarioFuncionamento,
-          preco: data.preco,
+          // horarioFuncionamento: data.horarioFuncionamento,
         };
 
-        setBarbearias(prev =>
-          prev.map(barbearia =>
-            barbearia.id === id ? barbeariaAtualizada : barbearia
-          )
+        setEmpresas(prev =>
+          prev.map(emp => (emp.empresaId === id ? empresaAtualizada : emp))
         );
 
         message.success('Barbearia atualizada com sucesso!');
       } else {
         // Criar nova barbearia
         const newId = Date.now().toString();
-        const novaBarbearia: Barbearia = {
-          id: newId,
+        const novaBarbearia: any = {
+          empresaId: newId,
           title: data.nome,
           descricao: data.descricao,
           bairro: data.bairro,
@@ -195,7 +119,7 @@ const Home = () => {
           preco: data.preco,
         };
 
-        setBarbearias(prev => [...prev, novaBarbearia]);
+        setEmpresas(prev => [...prev, novaBarbearia]);
         message.success('Barbearia criada com sucesso!');
       }
 
@@ -224,8 +148,8 @@ const Home = () => {
             Barbearias
           </h1>
           <p style={{ margin: '4px 0 0 0', color: '#666' }}>
-            {barbearias.length} barbearia{barbearias.length !== 1 ? 's' : ''}{' '}
-            encontrada{barbearias.length !== 1 ? 's' : ''}
+            {empresas.length} barbearia{empresas.length !== 1 ? 's' : ''}{' '}
+            encontrada{empresas.length !== 1 ? 's' : ''}
           </p>
         </div>
 
@@ -241,10 +165,10 @@ const Home = () => {
 
       {/* Cards das barbearias */}
       <Flex wrap gap="middle" justify="start">
-        {barbearias.map(barbearia => (
+        {empresas.map(emp => (
           <BarbeariaCard
-            key={barbearia.id}
-            barbearia={barbearia}
+            key={emp.empresaId}
+            empresa={emp}
             onCardClick={handleOpenBarbearia}
             onSettingsClick={handleSettingsClick}
             onMoreOptionsClick={handleMoreOptionsClick}
@@ -258,7 +182,7 @@ const Home = () => {
         onCancel={handleCloseModal}
         onSubmit={handleSubmitBarbearia}
         loading={loading}
-        barbearia={selectedBarbearia}
+        empresa={selectedBarbearia}
         isEditing={isEditing}
       />
     </div>

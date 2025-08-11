@@ -1,8 +1,15 @@
 // contexts/AuthContext.tsx
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from 'react';
 import { message } from 'antd';
 import { LoginService } from '../services/loginService';
-
+import { setLogoutFunction } from '../services/baseService/axiosConfig';
+// ... suas interfaces permanecem as mesmas ...
 interface Pessoa {
   pessoaId: number;
   cpf: string;
@@ -49,13 +56,11 @@ interface Cliente {
   clienteId: number;
   pessoaId: number;
   empresaId: number;
-  // adicione outros campos conforme necessário
 }
 
 interface Administrador {
   administradorId: number;
   pessoaId: number;
-  // adicione outros campos conforme necessário
 }
 
 interface Usuario {
@@ -100,6 +105,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const logout = () => {
+    // Limpar localStorage
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+
+    // Limpar estado
+    setToken(null);
+    setUser(null);
+
+    message.success('Logout realizado com sucesso!');
+
+    // Redirecionar para login
+    window.location.href = '/login';
+  };
+
+  // Configurar a função de logout no axios quando o componente monta
+  useEffect(() => {
+    setLogoutFunction(logout);
+  }, []);
+
   // Verificar se existe token salvo ao inicializar
   useEffect(() => {
     const savedToken = localStorage.getItem('auth_token');
@@ -126,15 +151,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  // Função para validar token (opcional - implementar conforme sua API)
+  // Função para validar token (opcional)
   const validateToken = async (token: string): Promise<boolean> => {
     try {
-      // Fazer uma requisição para validar o token
-      // Implementar conforme sua API
       const response = await fetch('/api/validate-token', {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       return response.ok;
     } catch {
@@ -142,12 +165,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<boolean> => {
     setIsLoading(true);
 
     try {
-      // Simular chamada da API - substitua pela sua implementação real
-      const response = await LoginService(username, password)
+      const response = await LoginService(username, password);
 
       if (!response) {
         throw new Error('Credenciais inválidas');
@@ -165,28 +190,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       message.success('Login realizado com sucesso!');
       return true;
-
     } catch (error: any) {
       message.error(error.message || 'Erro ao fazer login');
       return false;
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const logout = () => {
-    // Limpar localStorage
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-
-    // Limpar estado
-    setToken(null);
-    setUser(null);
-
-    message.success('Logout realizado com sucesso!');
-
-    // Redirecionar para login (opcional)
-    window.location.href = '/login';
   };
 
   const updateUser = (userData: Partial<Usuario>) => {
@@ -207,11 +216,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updateUser,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 // Hook para usar o contexto
@@ -224,12 +229,14 @@ export const useAuth = (): AuthContextType => {
 };
 
 // HOC para proteger rotas
-export const withAuth = <P extends object>(Component: React.ComponentType<P>) => {
+export const withAuth = <P extends object>(
+  Component: React.ComponentType<P>
+) => {
   return (props: P) => {
     const { isAuthenticated, isLoading } = useAuth();
 
     if (isLoading) {
-      return <div>Carregando...</div>; // ou um componente de loading
+      return <div>Carregando...</div>;
     }
 
     if (!isAuthenticated) {

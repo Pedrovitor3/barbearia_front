@@ -12,19 +12,7 @@ import {
 } from 'antd';
 import { useEffect } from 'react';
 import { type RcFile, type UploadFile } from 'antd/es/upload';
-
-interface Barbearia {
-  id: string;
-  title: string;
-  bairro: string;
-  cidade: string;
-  image: string;
-  descricao: string;
-  barbeiros: string[];
-  telefone: string;
-  horarioFuncionamento: string;
-  preco: number;
-}
+import type { EmpresaInterface } from '../../../interfaces/EmpresaInterface';
 
 interface BarbeariaFormData {
   nome: string;
@@ -41,9 +29,9 @@ interface BarbeariaFormData {
 interface ModalBarbeariaProps {
   open: boolean;
   onCancel: () => void;
-  onSubmit: (id: string, data: BarbeariaFormData) => void;
+  onSubmit: (id: number, data: BarbeariaFormData) => void;
   loading?: boolean;
-  barbearia?: Barbearia | null;
+  empresa?: EmpresaInterface | null;
   isEditing?: boolean;
 }
 
@@ -52,7 +40,7 @@ const ModalBarbearia: React.FC<ModalBarbeariaProps> = ({
   onCancel,
   onSubmit,
   loading = false,
-  barbearia = null,
+  empresa = null,
   isEditing = false,
 }) => {
   const { TextArea } = Input;
@@ -60,40 +48,40 @@ const ModalBarbearia: React.FC<ModalBarbeariaProps> = ({
 
   // Preencher form quando modal abre para edição
   useEffect(() => {
-    if (open && isEditing && barbearia) {
+    if (open && isEditing && empresa) {
       form.setFieldsValue({
-        nome: barbearia.title,
-        descricao: barbearia.descricao,
-        bairro: barbearia.bairro,
-        cidade: barbearia.cidade,
-        telefone: barbearia.telefone,
-        horarioFuncionamento: barbearia.horarioFuncionamento,
-        preco: barbearia.preco,
-        barbeiros: barbearia.barbeiros,
-        // Para imagem, você pode criar um UploadFile mock se necessário
-        imagem: barbearia.image
-          ? [
-              {
-                uid: '-1',
-                name: 'imagem-atual.jpg',
-                status: 'done',
-                url: barbearia.image,
-              },
-            ]
-          : [],
+        nome: empresa.nomeFantasia,
+        descricao: empresa.email,
+        // bairro: barbearia.bairro,
+        // cidade: barbearia.cidade,
+        // telefone: barbearia.telefone,
+        // horarioFuncionamento: barbearia.horarioFuncionamento,
+        // preco: barbearia.preco,
+        // barbeiros: barbearia.barbeiros,
+        // // Para imagem, você pode criar um UploadFile mock se necessário
+        // imagem: barbearia.image
+        //   ? [
+        //       {
+        //         uid: '-1',
+        //         name: 'imagem-atual.jpg',
+        //         status: 'done',
+        //         url: barbearia.image,
+        //       },
+        //     ]
+        //   : [],
       });
     } else if (!open || !isEditing) {
       form.resetFields();
     }
-  }, [open, isEditing, barbearia, form]);
+  }, [open, isEditing, empresa, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      if (isEditing && barbearia) {
-        onSubmit(barbearia.id, values);
+      if (isEditing && empresa) {
+        onSubmit(empresa.empresaId, values);
       } else {
-        onSubmit('', values); // Para criação, ID será gerado no componente pai
+        onSubmit(-1, values); // Para criação, ID será gerado no componente pai
       }
     } catch (error) {
       console.error('Erro na validação:', error);

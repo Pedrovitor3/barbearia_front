@@ -1,83 +1,74 @@
 // BarbeariaCard.tsx
 import { Card } from 'antd';
 import { EllipsisOutlined, SettingOutlined } from '@ant-design/icons';
-
-interface Barbearia {
-  id: string;
-  title: string;
-  bairro: string;
-  cidade: string;
-  image: string;
-  descricao: string;
-  barbeiros: string[];
-  telefone: string;
-  horarioFuncionamento: string;
-  preco: number;
-}
+import type { EmpresaInterface } from '../../../interfaces/EmpresaInterface';
 
 interface BarbeariaCardProps {
-  barbearia: Barbearia;
-  onCardClick: (id: string) => void;
-  onSettingsClick: (id: string) => void;
-  onMoreOptionsClick: (id: string) => void;
+  empresa: EmpresaInterface;
+  onCardClick: (id: number) => void;
+  onSettingsClick: (id: number) => void;
+  onMoreOptionsClick: (id: number) => void;
 }
 
-const BarbeariaCard: React.FC<BarbeariaCardProps> = ({
-  barbearia,
+const EmpresaCard: React.FC<BarbeariaCardProps> = ({
+  empresa,
   onCardClick,
   onSettingsClick,
   onMoreOptionsClick,
 }) => {
   const { Meta } = Card;
   const {
-    id,
-    title,
-    bairro,
-    cidade,
-    image,
-    descricao,
-    preco,
-    barbeiros,
+    empresaId,
+    nomeFantasia,
+    // bairro,
+    // cidade,
+    // image,
+    // descricao,
+    // preco,
+    // barbeiros,
+    email,
     telefone,
-  } = barbearia;
+  } = empresa;
 
   return (
     <Card
       hoverable
       className="click-card"
       style={{ width: 320, marginBottom: 16 }}
-      cover={
-        <img
-          src={image}
-          alt={title}
-          style={{
-            height: 200,
-            objectFit: 'cover',
-            borderRadius: '8px 8px 0 0',
-          }}
-        />
-      }
+      // cover={
+      //   <img
+      //     src={image}
+      //     alt={title}
+      //     style={{
+      //       height: 200,
+      //       objectFit: 'cover',
+      //       borderRadius: '8px 8px 0 0',
+      //     }}
+      //   />
+      // }
       actions={[
         <SettingOutlined
           key="setting"
           onClick={e => {
             e.stopPropagation();
-            onSettingsClick(id);
+            onSettingsClick(empresaId);
           }}
         />,
         <EllipsisOutlined
           key="ellipsis"
           onClick={e => {
             e.stopPropagation();
-            onMoreOptionsClick(id);
+            onMoreOptionsClick(empresaId);
           }}
         />,
       ]}
-      onClick={() => onCardClick(id)}
+      onClick={() => onCardClick(empresaId)}
     >
       <Meta
         title={
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{title}</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>
+            {nomeFantasia}
+          </span>
         }
         description={
           <div style={{ minHeight: '120px' }}>
@@ -89,7 +80,7 @@ const BarbeariaCard: React.FC<BarbeariaCardProps> = ({
                 lineHeight: '1.4',
               }}
             >
-              {descricao}
+              {email}
             </p>
 
             <div style={{ marginTop: '12px' }}>
@@ -100,7 +91,7 @@ const BarbeariaCard: React.FC<BarbeariaCardProps> = ({
                   fontSize: '13px',
                 }}
               >
-                📍 {bairro}, {cidade}
+                {/* 📍 {bairro}, {cidade} */}
               </p>
               <p
                 style={{
@@ -111,7 +102,7 @@ const BarbeariaCard: React.FC<BarbeariaCardProps> = ({
               >
                 📞 {telefone}
               </p>
-              {barbeiros && barbeiros.length > 0 && (
+              {empresa && (
                 <p
                   style={{
                     margin: '4px 0',
@@ -119,8 +110,8 @@ const BarbeariaCard: React.FC<BarbeariaCardProps> = ({
                     fontSize: '13px',
                   }}
                 >
-                  ✂️ {barbeiros.slice(0, 2).join(', ')}
-                  {barbeiros.length > 2 && ` +${barbeiros.length - 2}`}
+                  {/* ✂️ {empresa.slice(0, 2).join(', ')}
+                  {empresa.length > 2 && ` +${empresa.length - 2}`} */}
                 </p>
               )}
             </div>
@@ -139,7 +130,8 @@ const BarbeariaCard: React.FC<BarbeariaCardProps> = ({
                   color: '#52c41a',
                 }}
               >
-                A partir de R$ {preco.toFixed(2).replace('.', ',')}
+                A partir de R$
+                {/* {preco.toFixed(2).replace('.', ',')} */}
               </span>
             </div>
           </div>
@@ -149,4 +141,4 @@ const BarbeariaCard: React.FC<BarbeariaCardProps> = ({
   );
 };
 
-export default BarbeariaCard;
+export default EmpresaCard;
