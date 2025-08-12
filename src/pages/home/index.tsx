@@ -1,24 +1,17 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Flex, Button, message, type UploadFile } from 'antd';
+import { Flex, Button, message } from 'antd';
 import { useEffect, useState } from 'react';
-import barbeariaJoImg from '../../assets/BarbeariaImagens/barbeariaJo.png';
 import './index.css';
 import BarbeariaCard from '../../components/Card/BarbeariaCard';
-import ModalBarbearia from '../../components/Modal/BarbeariaModal';
-import { GetEmpresaService } from '../../services/empresaService';
-import type { EmpresaInterface } from '../../interfaces/EmpresaInterface';
-
-interface BarbeariaFormData {
-  nome: string;
-  descricao: string;
-  bairro: string;
-  cidade: string;
-  telefone: string;
-  horarioFuncionamento: string;
-  preco: number;
-  barbeiros?: string[];
-  imagem?: UploadFile[];
-}
+import ModalBarbearia from '../../components/Modal/EmpresaModal';
+import {
+  CreateEmpresaService,
+  GetEmpresaService,
+} from '../../services/empresaService';
+import type {
+  EmpresaFormData,
+  EmpresaInterface,
+} from '../../interfaces/EmpresaInterface';
 
 const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,7 +65,7 @@ const Home = () => {
     setSelectedBarbearia(null);
   };
 
-  const handleSubmitBarbearia = async (id: number, data: BarbeariaFormData) => {
+  const handleSubmitEmpresa = async (id: number, data: EmpresaFormData) => {
     try {
       setLoading(true);
 
@@ -80,53 +73,45 @@ const Home = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       if (isEditing && id) {
-        // Atualizar barbearia existente
-        // const empresaAtualizada: EmpresaInterface = {
-        const empresaAtualizada: any = {
-          // empresaId,
-          nomeFantasia: data.nome,
-          email: data.descricao,
-          // bairro: data.bairro,
-          // cidade: data.cidade,
-          // image:
-          //   data.imagem?.[0]?.url ||
-          //   data.imagem?.[0]?.thumbUrl ||
-          //   selectedBarbearia?.image ||
-          //   barbeariaJoImg,
-          // barbeiros: data.barbeiros || [],
-          telefone: data.telefone,
-          // horarioFuncionamento: data.horarioFuncionamento,
+        // Atualizar empresa existente
+        const empresaAtualizada: EmpresaInterface = {
+          ...selectedBarbearia!,
+          nomeFantasia: data.nomeFantasia,
+          slug: data.slug,
+          razaoSocial: data.razaoSocial,
+          cnpj: data.cnpj,
+          updatedAt: new Date().toISOString(),
         };
 
         setEmpresas(prev =>
           prev.map(emp => (emp.empresaId === id ? empresaAtualizada : emp))
         );
 
-        message.success('Barbearia atualizada com sucesso!');
+        message.success('Empresa atualizada com sucesso!');
       } else {
-        // Criar nova barbearia
-        const newId = Date.now().toString();
-        const novaBarbearia: any = {
-          empresaId: newId,
-          title: data.nome,
-          descricao: data.descricao,
-          bairro: data.bairro,
-          cidade: data.cidade,
-          image: data.imagem?.[0]?.thumbUrl || barbeariaJoImg,
-          barbeiros: data.barbeiros || [],
-          telefone: data.telefone,
-          horarioFuncionamento: data.horarioFuncionamento,
-          preco: data.preco,
+        // Criar nova empresa
+        const novaEmpresa: EmpresaInterface = {
+          empresaId: Date.now(),
+          nomeFantasia: data.nomeFantasia,
+          slug: data.slug,
+          razaoSocial: data.razaoSocial,
+          cnpj: data.cnpj,
+          ativo: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          deletedAt: null,
         };
 
-        setEmpresas(prev => [...prev, novaBarbearia]);
-        message.success('Barbearia criada com sucesso!');
+        await CreateEmpresaService(novaEmpresa);
+
+        setEmpresas(prev => [...prev, novaEmpresa]);
+        message.success('Empresa criada com sucesso!');
       }
 
       handleCloseModal();
     } catch (error) {
-      console.error('Erro ao salvar barbearia:', error);
-      message.error('Erro ao salvar barbearia. Tente novamente.');
+      console.error('Erro ao salvar empresa:', error);
+      message.error('Erro ao salvar empresa. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -180,7 +165,7 @@ const Home = () => {
       <ModalBarbearia
         open={isModalOpen}
         onCancel={handleCloseModal}
-        onSubmit={handleSubmitBarbearia}
+        onSubmit={handleSubmitEmpresa}
         loading={loading}
         empresa={selectedBarbearia}
         isEditing={isEditing}

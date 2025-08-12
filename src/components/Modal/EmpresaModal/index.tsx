@@ -12,24 +12,15 @@ import {
 } from 'antd';
 import { useEffect } from 'react';
 import { type RcFile, type UploadFile } from 'antd/es/upload';
-import type { EmpresaInterface } from '../../../interfaces/EmpresaInterface';
-
-interface BarbeariaFormData {
-  nome: string;
-  descricao: string;
-  bairro: string;
-  cidade: string;
-  telefone: string;
-  horarioFuncionamento: string;
-  preco: number;
-  barbeiros?: string[];
-  imagem?: UploadFile[];
-}
+import type {
+  EmpresaFormData,
+  EmpresaInterface,
+} from '../../../interfaces/EmpresaInterface';
 
 interface ModalBarbeariaProps {
   open: boolean;
   onCancel: () => void;
-  onSubmit: (id: number, data: BarbeariaFormData) => void;
+  onSubmit: (id: number, data: EmpresaFormData) => void;
   loading?: boolean;
   empresa?: EmpresaInterface | null;
   isEditing?: boolean;
@@ -46,29 +37,14 @@ const ModalBarbearia: React.FC<ModalBarbeariaProps> = ({
   const { TextArea } = Input;
   const [form] = Form.useForm();
 
-  // Preencher form quando modal abre para edição
+  // No useEffect para preencher o form:
   useEffect(() => {
     if (open && isEditing && empresa) {
       form.setFieldsValue({
-        nome: empresa.nomeFantasia,
-        descricao: empresa.email,
-        // bairro: barbearia.bairro,
-        // cidade: barbearia.cidade,
-        // telefone: barbearia.telefone,
-        // horarioFuncionamento: barbearia.horarioFuncionamento,
-        // preco: barbearia.preco,
-        // barbeiros: barbearia.barbeiros,
-        // // Para imagem, você pode criar um UploadFile mock se necessário
-        // imagem: barbearia.image
-        //   ? [
-        //       {
-        //         uid: '-1',
-        //         name: 'imagem-atual.jpg',
-        //         status: 'done',
-        //         url: barbearia.image,
-        //       },
-        //     ]
-        //   : [],
+        nomeFantasia: empresa.nomeFantasia,
+        slug: empresa.slug,
+        razaoSocial: empresa.razaoSocial,
+        cnpj: empresa.cnpj,
       });
     } else if (!open || !isEditing) {
       form.resetFields();
@@ -104,10 +80,8 @@ const ModalBarbearia: React.FC<ModalBarbeariaProps> = ({
     maxCount: 1,
   };
 
-  const modalTitle = isEditing
-    ? 'Editar Barbearia'
-    : 'Cadastrar Nova Barbearia';
-  const buttonText = isEditing ? 'Salvar Alterações' : 'Cadastrar Barbearia';
+  const modalTitle = isEditing ? 'Editar Empresa' : 'Cadastrar Nova Empresa';
+  const buttonText = isEditing ? 'Salvar Alterações' : 'Cadastrar Empresa';
 
   return (
     <Modal
@@ -132,6 +106,47 @@ const ModalBarbearia: React.FC<ModalBarbeariaProps> = ({
     >
       <Form form={form} layout="vertical" requiredMark={false}>
         <Form.Item
+          name="nomeFantasia"
+          label="Nome Fantasia"
+          rules={[
+            { required: true, message: 'Por favor, insira o nome fantasia!' },
+          ]}
+        >
+          <Input placeholder="Ex: Salão do João" />
+        </Form.Item>
+
+        <Form.Item
+          name="slug"
+          label="Slug"
+          rules={[{ required: true, message: 'Por favor, insira o slug!' }]}
+        >
+          <Input placeholder="Ex: salao-do-joao" />
+        </Form.Item>
+
+        <Form.Item
+          name="razaoSocial"
+          label="Razão Social"
+          rules={[
+            { required: true, message: 'Por favor, insira a razão social!' },
+          ]}
+        >
+          <Input placeholder="Ex: Salão do João LTDA" />
+        </Form.Item>
+
+        <Form.Item
+          name="cnpj"
+          label="CNPJ"
+          rules={[
+            { required: true, message: 'Por favor, insira o CNPJ!' },
+            {
+              pattern: /^\d{14}$/,
+              message: 'CNPJ deve conter 14 dígitos (apenas números)!',
+            },
+          ]}
+        >
+          <Input placeholder="00000000000002" maxLength={14} />
+        </Form.Item>
+        {/* <Form.Item
           name="nome"
           label="Nome da Barbearia"
           rules={[
@@ -254,7 +269,7 @@ const ModalBarbearia: React.FC<ModalBarbeariaProps> = ({
               {isEditing ? 'Alterar Imagem' : 'Selecionar Imagem'}
             </Button>
           </Upload>
-        </Form.Item>
+        </Form.Item> */}
       </Form>
     </Modal>
   );
