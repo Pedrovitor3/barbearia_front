@@ -22,7 +22,7 @@ export const CreateEmpresaService = async (novaEmpresa: EmpresaInterface) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar empresas:', error);
+    console.error('Erro ao criar empresa:', error);
     throw error;
   }
 };

@@ -3,9 +3,10 @@ export interface PessoaInterface {
   cpf: string;
   nome: string;
   sobrenome: string;
-  dataNascimento: string; //YYYY-MM-DD
-  sexo: string; //M | F
-  createdAt?: string | null;
-  updatedAt?: string | null;
-  deletedAt?: string | null;
+  dataNascimento: string;
+  sexo: 'M' | 'F';
+  username: string; // email
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
 }

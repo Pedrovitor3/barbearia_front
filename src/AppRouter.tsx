@@ -35,6 +35,7 @@ import Perfil from './pages/Perfil';
 import Login from './pages/Login';
 import { darkTheme, lightTheme, type AppThemeMode } from './theme';
 import { useAuth } from './context/AuthContext';
+import Funcionarios from './pages/Funcionarios';
 
 const { Header, Content, Sider } = Layout;
 const { Title } = Typography;
@@ -116,6 +117,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
           label: 'Elite Barber',
         },
       ],
+    },
+    {
+      key: '/funcionarios',
+      icon: <CalendarOutlined />,
+      label: 'Funcionários',
     },
     {
       key: '/agendamentos',
@@ -357,26 +363,46 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
               }}
             >
               <Routes>
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                } />
-                <Route path="/barbearia/:id" element={
-                  <ProtectedRoute>
-                    <Barbearia />
-                  </ProtectedRoute>
-                } />
-                <Route path="/agendamentos" element={
-                  <ProtectedRoute>
-                    <div>Página de Agendamentos</div>
-                  </ProtectedRoute>
-                } />
-                <Route path="/perfil" element={
-                  <ProtectedRoute>
-                    <Perfil />
-                  </ProtectedRoute>
-                } />
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/barbearia/:id"
+                  element={
+                    <ProtectedRoute>
+                      <Barbearia />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/funcionarios"
+                  element={
+                    <ProtectedRoute>
+                      <Funcionarios />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/agendamentos"
+                  element={
+                    <ProtectedRoute>
+                      <div>Página de Agendamentos</div>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/perfil"
+                  element={
+                    <ProtectedRoute>
+                      <Perfil />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
@@ -409,11 +435,18 @@ const AppRouter = () => {
       <Routes>
         <Route
           path="/login"
-          element={<Login isDarkMode={themeMode === 'dark'} toggleTheme={toggleTheme} />}
+          element={
+            <Login
+              isDarkMode={themeMode === 'dark'}
+              toggleTheme={toggleTheme}
+            />
+          }
         />
         <Route
           path="/*"
-          element={<AppLayout themeMode={themeMode} toggleTheme={toggleTheme} />}
+          element={
+            <AppLayout themeMode={themeMode} toggleTheme={toggleTheme} />
+          }
         />
       </Routes>
     </Router>

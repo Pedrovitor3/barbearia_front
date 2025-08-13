@@ -1,0 +1,162 @@
+/* Estilos personalizados para a página de funcionários */
+
+.funcionario-card {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.funcionario-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.funcionario-card .ant-card-meta-title {
+  margin-bottom: 8px !important;
+}
+
+.funcionario-card .ant-card-meta-description {
+  line-height: 1.5;
+}
+
+.funcionario-card .ant-card-actions {
+  background: #fafafa;
+  border-top: 1px solid #f0f0f0;
+}
+
+.funcionario-card .ant-card-actions > li {
+  margin: 8px 0;
+}
+
+.funcionario-card .ant-card-actions > li > span {
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.funcionario-card .ant-card-actions > li:hover > span {
+  color: #1890ff;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .funcionario-card {
+    width: 100% !important;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 16px;
+  }
+
+  .header-content .ant-btn {
+    width: 100%;
+  }
+}
+
+/* Estilos para modal */
+.funcionario-modal .ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.funcionario-modal .ant-input,
+.funcionario-modal .ant-select-selector,
+.funcionario-modal .ant-picker {
+  border-radius: 6px;
+}
+
+.funcionario-modal .ant-input:focus,
+.funcionario-modal .ant-select-focused .ant-select-selector,
+.funcionario-modal .ant-picker-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Estados de loading */
+.page-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.empty-state p {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+/* Tags de cargo */
+.cargo-tag-dono {
+  background-color: #fadb14;
+  border-color: #fadb14;
+  color: #000;
+}
+
+.cargo-tag-gerente {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  color: #fff;
+}
+
+.cargo-tag-barbeiro {
+  background-color: #52c41a;
+  border-color: #52c41a;
+  color: #fff;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.funcionario-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Estilos para status ativo/inativo */
+.status-ativo {
+  color: #52c41a;
+  font-weight: 500;
+}
+
+.status-inativo {
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+/* Melhorias no layout */
+.page-header {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  margin: 0;
+  fontsize: 24px;
+  font-weight: bold;
+}
+
+.page-subtitle {
+  margin: 4px 0 0 0;
+  color: #666;
+  font-size: 14px;
+}
