@@ -90,7 +90,11 @@ const Funcionarios = () => {
   ) => {
     try {
       setLoading(true);
-      console.log('Dados do formulário:', data);
+      const dataLimpa = {
+        ...data,
+        cpf: data.cpf.replace(/\D/g, ''), // Remove pontos, hífens e outros caracteres não numéricos
+      };
+      console.log('Dados do formulário:', dataLimpa);
       if (isEditing && id) {
         // Atualizar funcionário existente
         // const funcionarioAtualizado = await UpdateFuncionarioService(id, data);
@@ -105,7 +109,7 @@ const Funcionarios = () => {
       } else {
         // Criar novo funcionário
         const novoFuncionario = await CreateFuncionarioService({
-          ...data,
+          ...dataLimpa,
           empresaId: empresaId, // Usar o ID da empresa atual
         });
 

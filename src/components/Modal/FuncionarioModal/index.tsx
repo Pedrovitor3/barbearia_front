@@ -160,13 +160,25 @@ const FuncionarioModal: React.FC<FuncionarioModalProps> = ({
               rules={[
                 { required: true, message: 'CPF é obrigatório' },
                 {
-                  pattern: /^\d{3}\.\d{3}\.\d{3}-\d{2}$/,
-                  message: 'CPF deve estar no formato 000.000.000-00',
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+
+                    const cpfLimpo = value.replace(/\D/g, '');
+                    if (cpfLimpo.length !== 11) {
+                      return Promise.reject(
+                        new Error('CPF deve conter 11 dígitos')
+                      );
+                    }
+
+                    // Aqui você pode adicionar validação de CPF válido se necessário
+                    return Promise.resolve();
+                  },
                 },
               ]}
             >
               <Input
                 placeholder="000.000.000-00"
+                maxLength={14} // Limita o input a 14 caracteres
                 onChange={e => {
                   const formatted = formatCPF(e.target.value);
                   if (formatted.length <= 14) {

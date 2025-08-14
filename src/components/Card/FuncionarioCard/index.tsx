@@ -79,7 +79,7 @@ const FuncionarioCard: React.FC<FuncionarioCardProps> = ({
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Title level={4} style={{ margin: 0 }}>
-              {funcionario.pessoa.nome} {funcionario.pessoa.sobrenome}
+              {funcionario?.pessoa?.nome} {funcionario?.pessoa?.sobrenome}
             </Title>
             {!funcionario.ativo && <Tag color="red">Inativo</Tag>}
           </div>
