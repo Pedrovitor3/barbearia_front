@@ -1,6 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Flex, Button, message } from 'antd';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Adicionado para navegação
 import './index.css';
 import BarbeariaCard from '../../components/Card/BarbeariaCard';
 import ModalBarbearia from '../../components/Modal/EmpresaModal';
@@ -14,10 +15,10 @@ import type {
 } from '../../interfaces/EmpresaInterface';
 
 const Home = () => {
+  const navigate = useNavigate(); // Hook para navegação
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  // const [empresas, setEmpresas] = useState<EmpresaInterface[]>([]);
   const [empresas, setEmpresas] = useState<any[]>([]);
   const [selectedBarbearia, setSelectedBarbearia] =
     useState<EmpresaInterface | null>(null);
@@ -28,14 +29,20 @@ const Home = () => {
   }, []);
 
   const loadBarbearias = async () => {
-    const response = await GetEmpresaService();
-    console.log('response', response);
-    setEmpresas(response);
+    try {
+      const response = await GetEmpresaService();
+      console.log('response', response);
+      setEmpresas(response);
+    } catch (error) {
+      console.error('Erro ao carregar empresas:', error);
+      message.error('Erro ao carregar empresas');
+    }
   };
 
-  const handleOpenBarbearia = (id: number) => {
-    console.log('barbearia id', id);
-    // Aqui você pode implementar navegação para página de detalhes
+  const handleOpenBarbearia = (empresaId: number) => {
+    console.log('Navegando para empresa ID:', empresaId);
+    // Navegar para a página da empresa usando o ID
+    navigate(`/empresa/${empresaId}`);
   };
 
   const handleSettingsClick = (id: number) => {
@@ -104,7 +111,8 @@ const Home = () => {
 
         await CreateEmpresaService(novaEmpresa);
 
-        setEmpresas(prev => [...prev, novaEmpresa]);
+        // Recarregar a lista após criar
+        await loadBarbearias();
         message.success('Empresa criada com sucesso!');
       }
 

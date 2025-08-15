@@ -33,6 +33,7 @@ import Barbearia from './pages/Barbearia';
 import Home from './pages/home';
 import Perfil from './pages/Perfil';
 import Login from './pages/Login';
+import EmpresaDetalhes from './pages/EmpresaDetalhes'; // Nova importação
 import { darkTheme, lightTheme, type AppThemeMode } from './theme';
 import { useAuth } from './context/AuthContext';
 import Funcionarios from './pages/Funcionarios';
@@ -95,6 +96,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
       icon: <HomeOutlined />,
       label: 'Início',
     },
+    // Comentado para simplificar navegação
     // {
     //   key: '/barbearia',
     //   icon: <ScissorOutlined />,
@@ -120,7 +122,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
     // },
     {
       key: '/funcionarios',
-      icon: <CalendarOutlined />,
+      icon: <UserOutlined />,
       label: 'Funcionários',
     },
     {
@@ -170,6 +172,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
   // Determinar a chave selecionada do menu baseada na rota atual
   const getSelectedKeys = () => {
     const pathname = location.pathname;
+
+    // Se estiver na página de uma empresa específica, não selecionar nenhum item do menu
+    if (pathname.startsWith('/empresa/')) {
+      return [];
+    }
+
     if (pathname.startsWith('/barbearia/')) {
       return [pathname];
     }
@@ -368,6 +376,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
                   element={
                     <ProtectedRoute>
                       <Home />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/empresa/:empresaId"
+                  element={
+                    <ProtectedRoute>
+                      <EmpresaDetalhes />
                     </ProtectedRoute>
                   }
                 />
