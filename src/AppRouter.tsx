@@ -95,29 +95,29 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
       icon: <HomeOutlined />,
       label: 'Início',
     },
-    {
-      key: '/barbearia',
-      icon: <ScissorOutlined />,
-      label: 'Barbearias',
-      children: [
-        {
-          key: '/barbearia/jo',
-          label: 'Barbearia do Jô',
-        },
-        {
-          key: '/barbearia/ze',
-          label: 'Barbearia do Zé',
-        },
-        {
-          key: '/barbearia/rei',
-          label: 'Rei da Navalha',
-        },
-        {
-          key: '/barbearia/elite',
-          label: 'Elite Barber',
-        },
-      ],
-    },
+    // {
+    //   key: '/barbearia',
+    //   icon: <ScissorOutlined />,
+    //   label: 'Barbearias',
+    //   children: [
+    //     {
+    //       key: '/barbearia/jo',
+    //       label: 'Barbearia do Jô',
+    //     },
+    //     {
+    //       key: '/barbearia/ze',
+    //       label: 'Barbearia do Zé',
+    //     },
+    //     {
+    //       key: '/barbearia/rei',
+    //       label: 'Rei da Navalha',
+    //     },
+    //     {
+    //       key: '/barbearia/elite',
+    //       label: 'Elite Barber',
+    //     },
+    //   ],
+    // },
     {
       key: '/funcionarios',
       icon: <CalendarOutlined />,
