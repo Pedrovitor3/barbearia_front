@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Flex, Button, message } from 'antd';
+import { Flex, Button, message, Divider, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // Adicionado para navegação
 import './index.css';
@@ -32,7 +32,7 @@ const Home = () => {
     try {
       const response = await GetEmpresaService();
       console.log('response', response);
-      setEmpresas(response);
+      setEmpresas(Array.isArray(response)? response : []);
     } catch (error) {
       console.error('Erro ao carregar empresas:', error);
       message.error('Erro ao carregar empresas');
@@ -158,7 +158,7 @@ const Home = () => {
 
       {/* Cards das barbearias */}
       <Flex wrap gap="middle" justify="start">
-        {empresas.map(emp => (
+        {empresas.length > 0 ? empresas?.map(emp => (
           <BarbeariaCard
             key={emp.empresaId}
             empresa={emp}
@@ -166,7 +166,12 @@ const Home = () => {
             onSettingsClick={handleSettingsClick}
             onMoreOptionsClick={handleMoreOptionsClick}
           />
-        ))}
+        )):(<Divider>
+          <Typography.Text style={{ width: '100%', textAlign: 'center' }}>
+          Nenhuma barbearia encontrada.
+        </Typography.Text>
+          </Divider>
+        )}
       </Flex>
 
       {/* Modal unificado para criar/editar */}

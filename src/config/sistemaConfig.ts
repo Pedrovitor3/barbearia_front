@@ -1,8 +1,8 @@
 export const sistemaName = 'Bigode Time';
 export const sistemaDescricao = 'Sistema para agendamento de horário';
 export const sistemaVersao = '1.0.0-00';
-export const domainNameProd = 'sisbg.policiacivil.go.gov.br/';
-export const domainNameHomo = 'sisbg-homo.policiacivil.go.gov.br/';
+export const domainNameProd = '';
+export const domainNameHomo = 'http://localhost:5173';
 
 export const domainNameDesv = 'localhost';
 

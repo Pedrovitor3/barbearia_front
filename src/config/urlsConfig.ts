@@ -13,7 +13,7 @@ if (window.location.hostname.indexOf(domainNameProd) > -1) {
   ambiente = 'HOMO';
   if (window.location.hostname.indexOf(domainNameDesv) > -1) {
     //PARA DESENVOLVIMENTO
-    urlsServices.BACKENDWS = 'http://localhost:3000/';
+    urlsServices.BACKENDWS = 'http://127.0.0.1:3000';
     //urlsServices.BACKENDWS = 'https://sisbgws-homo.policiacivil.go.gov.br';
     //urlsServices.BACKEND = 'URLBACKENDHOMO';
   }
