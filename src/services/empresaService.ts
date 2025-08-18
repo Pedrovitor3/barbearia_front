@@ -10,6 +10,17 @@ export const GetEmpresaService = async () => {
     throw error;
   }
 };
+
+export const GetOneEmpresaService = async (empresaId: string) => {
+  try{
+    const response = await apiClient.get(`/empresa/${empresaId}`);
+    return response.data || {};
+  }catch (error) {
+    console.error('Erro ao buscar empresa:', error);
+    throw error;
+  }
+}
+
 export const CreateEmpresaService = async (novaEmpresa: EmpresaInterface) => {
   const { nomeFantasia, slug, razaoSocial, cnpj, ativo } = novaEmpresa;
   try {

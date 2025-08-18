@@ -31,6 +31,7 @@ import {
   DeleteOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { GetOneEmpresaService } from '../../services/empresaService';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -115,10 +116,11 @@ const EmpresaDetalhes: React.FC = () => {
 
     try {
       setLoading(true);
-      // const { empresaData } = await EmpresaService(empresaId);
+       const empresaData  = await GetOneEmpresaService(empresaId);
+       console.log('Dados da empresa:', empresaData);
       // const { funcionariosData } = await FuncionariosService(empresaId);
       // const { agendamentosData } = await AgendamentosService(empresaId);
-      // setEmpresa(empresaData);
+       setEmpresa(empresaData);
       // setFuncionarios(funcionariosData);
       // setAgendamentos(agendamentosData);
     } catch (error) {
