@@ -32,6 +32,13 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { GetOneEmpresaService } from '../../services/empresaService';
+import FuncionarioModal from '../../components/Modal/FuncionarioModal';
+import type {
+  FuncionarioFormData,
+  FuncionarioInterface,
+} from '../../interfaces/FuncionarioInterface';
+import { CreateFuncionarioService } from '../../services/funcionarioService';
+import FuncionariosTab from '../../components/Tab';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -64,21 +71,6 @@ interface Pessoa {
   deletedAt?: string;
 }
 
-interface Funcionario {
-  funcionarioId: number;
-  pessoaId: number;
-  empresaId: number;
-  cargo: string;
-  salario?: number;
-  dataAdmissao: string;
-  dataDemissao?: string;
-  ativo: boolean;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
-  pessoa: Pessoa;
-}
-
 interface Agendamento {
   agendamentoId: number;
   clienteNome: string;
@@ -99,7 +91,7 @@ const EmpresaDetalhes: React.FC = () => {
   const navigate = useNavigate();
 
   const [empresa, setEmpresa] = useState<EmpresaDetalhes | null>(null);
-  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [funcionarios, setFuncionarios] = useState<FuncionarioInterface[]>([]);
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -116,13 +108,11 @@ const EmpresaDetalhes: React.FC = () => {
 
     try {
       setLoading(true);
-       const empresaData  = await GetOneEmpresaService(empresaId);
-       console.log('Dados da empresa:', empresaData);
-      // const { funcionariosData } = await FuncionariosService(empresaId);
-      // const { agendamentosData } = await AgendamentosService(empresaId);
-       setEmpresa(empresaData);
-      // setFuncionarios(funcionariosData);
-      // setAgendamentos(agendamentosData);
+      const empresaData = await GetOneEmpresaService(empresaId);
+      console.log('Dados da empresa:', empresaData);
+      setEmpresa(empresaData.empresa);
+      setFuncionarios(empresaData?.funcionarios);
+      // setAgendamentos(empresaData?.agendamentos);
     } catch (error) {
       console.error('Erro geral ao carregar dados:', error);
       message.error('Erro ao carregar dados da empresa');
@@ -130,81 +120,6 @@ const EmpresaDetalhes: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // Colunas da tabela de funcionários
-  const funcionariosColumns: ColumnsType<Funcionario> = [
-    {
-      title: 'Funcionário',
-      key: 'funcionario',
-      render: (_, record) => (
-        <Space>
-          <Avatar size="small" icon={<UserOutlined />} />
-          <div>
-            <div style={{ fontWeight: 500 }}>
-              {record.pessoa.nome} {record.pessoa.sobrenome}
-            </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
-              CPF: {record.pessoa.cpf}
-            </div>
-          </div>
-        </Space>
-      ),
-    },
-    {
-      title: 'Cargo',
-      dataIndex: 'cargo',
-      key: 'cargo',
-      render: (cargo: string) => (
-        <Tag
-          color={
-            cargo === 'dono' ? 'gold' : cargo === 'gerente' ? 'blue' : 'default'
-          }
-        >
-          {cargo.charAt(0).toUpperCase() + cargo.slice(1)}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Data Admissão',
-      dataIndex: 'dataAdmissao',
-      key: 'dataAdmissao',
-      render: (data: string) => new Date(data).toLocaleDateString('pt-BR'),
-    },
-    {
-      title: 'Status',
-      key: 'status',
-      render: (_, record) => (
-        <Tag color={record.ativo ? 'green' : 'red'}>
-          {record.ativo ? 'Ativo' : 'Inativo'}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Ações',
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Tooltip title="Editar">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              size="small"
-              onClick={() => handleEditFuncionario(record.funcionarioId)}
-            />
-          </Tooltip>
-          <Tooltip title="Excluir">
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              size="small"
-              onClick={() => handleDeleteFuncionario(record.funcionarioId)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
-  ];
 
   // Colunas da tabela de agendamentos
   const agendamentosColumns: ColumnsType<Agendamento> = [
@@ -445,16 +360,10 @@ const EmpresaDetalhes: React.FC = () => {
           tab={`Funcionários (${funcionarios.length})`}
           key="funcionarios"
         >
-          <div style={{ marginBottom: 16 }}>
-            <Button type="primary" icon={<PlusOutlined />}>
-              Adicionar Funcionário
-            </Button>
-          </div>
-          <Table
-            dataSource={funcionarios}
-            columns={funcionariosColumns}
-            rowKey="funcionarioId"
-            pagination={false}
+          <FuncionariosTab
+            empresaId={empresaId ? parseInt(empresaId) : 0}
+            funcionarios={funcionarios}
+            onFuncionariosUpdate={setFuncionarios}
           />
         </TabPane>
 

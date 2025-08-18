@@ -94,12 +94,12 @@ const FuncionarioCard: React.FC<FuncionarioCardProps> = ({
 
             <div style={{ marginBottom: 4 }}>
               <Text type="secondary">Email: </Text>
-              <Text>{funcionario.pessoa.username}</Text>
+              <Text>{funcionario.pessoa?.username}</Text>
             </div>
 
             <div style={{ marginBottom: 4 }}>
               <Text type="secondary">CPF: </Text>
-              <Text>{funcionario.pessoa.cpf}</Text>
+              <Text>{funcionario.pessoa?.cpf}</Text>
             </div>
 
             <div style={{ marginBottom: 4 }}>

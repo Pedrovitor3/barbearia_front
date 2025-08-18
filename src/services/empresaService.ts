@@ -1,3 +1,4 @@
+import { Alert } from 'antd';
 import type { EmpresaInterface } from '../interfaces/EmpresaInterface';
 import { apiClient } from './baseService/axiosConfig';
 
@@ -12,14 +13,14 @@ export const GetEmpresaService = async () => {
 };
 
 export const GetOneEmpresaService = async (empresaId: string) => {
-  try{
+  try {
     const response = await apiClient.get(`/empresa/${empresaId}`);
     return response.data || {};
-  }catch (error) {
+  } catch (error) {
     console.error('Erro ao buscar empresa:', error);
     throw error;
   }
-}
+};
 
 export const CreateEmpresaService = async (novaEmpresa: EmpresaInterface) => {
   const { nomeFantasia, slug, razaoSocial, cnpj, ativo } = novaEmpresa;
@@ -34,6 +35,7 @@ export const CreateEmpresaService = async (novaEmpresa: EmpresaInterface) => {
     return response.data;
   } catch (error) {
     console.error('Erro ao criar empresa:', error);
+    Alert;
     throw error;
   }
 };
