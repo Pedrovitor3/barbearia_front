@@ -131,6 +131,8 @@ const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
   const handleEditFuncionario = (id: number) => {
     const funcionario = funcionarios.find(f => f.funcionarioId === id);
     setSelectedFuncionario(funcionario || null);
+
+    setIsModalOpen(true);
   };
 
   const handleDeleteFuncionario = async (id: number) => {

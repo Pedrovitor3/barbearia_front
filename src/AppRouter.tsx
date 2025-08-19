@@ -120,21 +120,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({ themeMode, toggleTheme }) => {
     //     },
     //   ],
     // },
-    {
-      key: '/funcionarios',
-      icon: <UserOutlined />,
-      label: 'Funcionários',
-    },
-    {
-      key: '/agendamentos',
-      icon: <CalendarOutlined />,
-      label: 'Agendamentos',
-    },
-    {
-      key: '/perfil',
-      icon: <UserOutlined />,
-      label: 'Perfil',
-    },
+    // {
+    //   key: '/funcionarios',
+    //   icon: <UserOutlined />,
+    //   label: 'Funcionários',
+    // },
+    // {
+    //   key: '/agendamentos',
+    //   icon: <CalendarOutlined />,
+    //   label: 'Agendamentos',
+    // },
+    // {
+    //   key: '/perfil',
+    //   icon: <UserOutlined />,
+    //   label: 'Perfil',
+    // },
   ];
 
   const onMenuClick = ({ key }: { key: string }) => {

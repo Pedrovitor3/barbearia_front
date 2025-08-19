@@ -37,10 +37,9 @@ const FuncionarioModal: React.FC<FuncionarioModalProps> = ({
   empresaId = 1, // Default empresa ID
 }) => {
   const [form] = Form.useForm();
-
   useEffect(() => {
     if (open) {
-      if (isEditing && funcionario) {
+      if (funcionario) {
         // Preencher formulário para edição
         form.setFieldsValue({
           nome: funcionario.pessoa.nome,

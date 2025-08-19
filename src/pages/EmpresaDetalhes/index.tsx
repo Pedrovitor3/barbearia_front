@@ -389,21 +389,21 @@ const EmpresaDetalhes: React.FC = () => {
         </TabPane>
 
         {/* Serviços */}
-        <TabPane tab="Serviços" key="servicos">
+        {/* <TabPane tab="Serviços" key="servicos">
           <div style={{ textAlign: 'center', padding: '50px' }}>
             <Empty description="Página em desenvolvimento" />
             <Button type="primary" style={{ marginTop: 16 }}>
               Adicionar Serviço
             </Button>
           </div>
-        </TabPane>
+        </TabPane> */}
 
         {/* Relatórios */}
-        <TabPane tab="Relatórios" key="relatorios">
+        {/* <TabPane tab="Relatórios" key="relatorios">
           <div style={{ textAlign: 'center', padding: '50px' }}>
             <Empty description="Relatórios em desenvolvimento" />
           </div>
-        </TabPane>
+        </TabPane> */}
       </Tabs>
     </div>
   );
