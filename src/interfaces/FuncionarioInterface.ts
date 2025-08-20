@@ -27,4 +27,5 @@ export interface FuncionarioFormData {
   salario: number | null;
   dataAdmissao: string;
   empresaId: number;
+  email: string;
 }

@@ -45,6 +45,7 @@ const FuncionarioModal: React.FC<FuncionarioModalProps> = ({
           nome: funcionario.pessoa.nome,
           sobrenome: funcionario.pessoa.sobrenome,
           cpf: funcionario.pessoa.cpf,
+          email: funcionario.pessoa.email,
           username: funcionario.pessoa.username,
           dataNascimento: dayjs(funcionario.pessoa.dataNascimento),
           sexo: funcionario.pessoa.sexo,
@@ -71,6 +72,7 @@ const FuncionarioModal: React.FC<FuncionarioModalProps> = ({
         nome: values.nome,
         sobrenome: values.sobrenome,
         cpf: values.cpf,
+        email: values.email,
         username: values.username,
         dataNascimento: values.dataNascimento.format('YYYY-MM-DD'),
         sexo: values.sexo,
@@ -137,9 +139,9 @@ const FuncionarioModal: React.FC<FuncionarioModalProps> = ({
         </Row>
 
         <Row gutter={16}>
-          <Col span={24}>
+          <Col span={12}>
             <Form.Item
-              name="username"
+              name="email"
               label="Email"
               rules={[
                 { required: true, message: 'Email é obrigatório' },
@@ -147,6 +149,20 @@ const FuncionarioModal: React.FC<FuncionarioModalProps> = ({
               ]}
             >
               <Input placeholder="Digite o email" type="email" />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="username"
+              label="Nome de Usuário"
+              rules={[
+                {
+                  min: 3,
+                  message: 'Username deve ter pelo menos 3 caracteres',
+                },
+              ]}
+            >
+              <Input placeholder="Digite o nome de usuário (opcional)" />
             </Form.Item>
           </Col>
         </Row>

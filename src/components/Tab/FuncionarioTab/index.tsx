@@ -4,24 +4,18 @@ import {
   PlusOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import {
-  Flex,
-  Button,
-  message,
-  Spin,
-  Table,
-  Tag,
-  Space,
-  Avatar,
-  Tooltip,
-} from 'antd';
-import { useEffect, useState } from 'react';
+import { Button, Spin, Table, Tag, Space, Avatar, Tooltip, App } from 'antd';
+import { useState } from 'react';
 import type {
   FuncionarioFormData,
   FuncionarioInterface,
-} from '../../interfaces/FuncionarioInterface';
-import { CreateFuncionarioService } from '../../services/funcionarioService';
-import FuncionarioModal from '../Modal/FuncionarioModal';
+} from '../../../interfaces/FuncionarioInterface';
+import {
+  CreateFuncionarioService,
+  DeleteFuncionarioService,
+  UpdateFuncionarioService,
+} from '../../../services/funcionarioService';
+import FuncionarioModal from '../../Modal/FuncionarioModal';
 import type { ColumnsType } from 'antd/es/table';
 
 interface FuncionariosTabProps {
@@ -30,45 +24,17 @@ interface FuncionariosTabProps {
   onFuncionariosUpdate: (funcs: FuncionarioInterface[]) => void;
 }
 
-const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
+const FuncionariosTabContent: React.FC<FuncionariosTabProps> = ({
   empresaId,
   funcionarios,
   onFuncionariosUpdate,
 }) => {
+  const { message } = App.useApp(); // Use the App context for message
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedFuncionario, setSelectedFuncionario] =
     useState<FuncionarioInterface | null>(null);
-
-  const handleOpenFuncionario = (id: number) => {
-    console.log('funcionario id', id);
-    // Implementar navegação para página de detalhes do funcionário
-    // ou abrir modal com mais informações
-  };
-
-  const handleSettingsClick = (id: number) => {
-    const funcionario = funcionarios.find(f => f.funcionarioId === id);
-    if (funcionario) {
-      setSelectedFuncionario(funcionario);
-      setIsEditing(true);
-      setIsModalOpen(true);
-    }
-  };
-
-  const handleMoreOptionsClick = (id: number) => {
-    console.log('Mais opções funcionário', id);
-    const funcionario = funcionarios.find(f => f.funcionarioId === id);
-    if (funcionario) {
-      // Implementar dropdown com opções como excluir, desativar, etc.
-      // Exemplo de confirmação de exclusão:
-      // Modal.confirm({
-      //   title: 'Confirmar exclusão',
-      //   content: `Deseja excluir o funcionário ${funcionario.pessoa.nome} ${funcionario.pessoa.sobrenome}?`,
-      //   onOk: () => handleDeleteFuncionario(id),
-      // });
-    }
-  };
 
   const handleOpenModalFuncionario = () => {
     setSelectedFuncionario(null);
@@ -97,12 +63,15 @@ const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
 
       if (isEditing && id) {
         // Atualizar funcionário existente
-        // const funcionarioAtualizado = await UpdateFuncionarioService(id, dataLimpa);
-        // onFuncionariosUpdate(
-        //   funcionarios.map(func =>
-        //     func.funcionarioId === id ? funcionarioAtualizado : func
-        //   )
-        // );
+        const funcionarioAtualizado = await UpdateFuncionarioService(
+          id,
+          dataLimpa
+        );
+        onFuncionariosUpdate(
+          funcionarios.map(func =>
+            func.funcionarioId === id ? funcionarioAtualizado : func
+          )
+        );
         message.success('Funcionário atualizado com sucesso!');
       } else {
         // Criar novo funcionário
@@ -118,27 +87,27 @@ const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
 
       handleCloseModal();
     } catch (error: any) {
-      // ... existing error handling
+      console.error('Erro ao criar/atualizar funcionário:', error);
+      message.error('Erro ao processar funcionário. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCloseModalFuncionario = () => {
-    setIsModalOpen(false);
-  };
-
   const handleEditFuncionario = (id: number) => {
     const funcionario = funcionarios.find(f => f.funcionarioId === id);
+    console.log('func', funcionario);
     setSelectedFuncionario(funcionario || null);
-
+    setIsEditing(true); // Set isEditing to true when editing
     setIsModalOpen(true);
   };
 
   const handleDeleteFuncionario = async (id: number) => {
     try {
-      // await DeleteFuncionarioService(id);
-      // setFuncionarios(prev => prev.filter(func => func.funcionarioId !== id));
+      await DeleteFuncionarioService(id);
+      onFuncionariosUpdate(
+        funcionarios.filter(func => func.funcionarioId !== id)
+      );
       message.success('Funcionário excluído com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir funcionário:', error);
@@ -156,10 +125,11 @@ const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
           <Avatar size="small" icon={<UserOutlined />} />
           <div>
             <div style={{ fontWeight: 500 }}>
-              {record.pessoa.nome} {record.pessoa.sobrenome}
+              {/* Add null checks for pessoa object */}
+              {record?.pessoa?.nome || 'N/A'} {record?.pessoa?.sobrenome || ''}
             </div>
             <div style={{ fontSize: '12px', color: '#666' }}>
-              CPF: {record.pessoa.cpf}
+              CPF: {record?.pessoa?.cpf || 'N/A'}
             </div>
           </div>
         </Space>
@@ -175,7 +145,7 @@ const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
             cargo === 'dono' ? 'gold' : cargo === 'gerente' ? 'blue' : 'default'
           }
         >
-          {cargo.charAt(0).toUpperCase() + cargo.slice(1)}
+          {cargo?.charAt(0).toUpperCase() + cargo?.slice(1) || 'N/A'}
         </Tag>
       ),
     },
@@ -183,7 +153,8 @@ const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
       title: 'Data Admissão',
       dataIndex: 'dataAdmissao',
       key: 'dataAdmissao',
-      render: (data: string) => new Date(data).toLocaleDateString('pt-BR'),
+      render: (data: string) =>
+        data ? new Date(data).toLocaleDateString('pt-BR') : 'N/A',
     },
     {
       title: 'Status',
@@ -221,7 +192,7 @@ const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
     },
   ];
 
-  if (isEditing) {
+  if (isEditing && loading) {
     return (
       <div
         style={{
@@ -238,8 +209,6 @@ const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
 
   return (
     <div>
-      {/* Cards dos funcionários */}
-
       <div style={{ marginBottom: 16 }}>
         <Button
           type="primary"
@@ -267,6 +236,15 @@ const FuncionariosTab: React.FC<FuncionariosTabProps> = ({
         empresaId={empresaId}
       />
     </div>
+  );
+};
+
+// Wrapper component with App provider
+const FuncionariosTab: React.FC<FuncionariosTabProps> = props => {
+  return (
+    <App>
+      <FuncionariosTabContent {...props} />
+    </App>
   );
 };
 

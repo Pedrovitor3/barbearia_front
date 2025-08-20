@@ -9,4 +9,5 @@ export interface PessoaInterface {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  email: string;
 }

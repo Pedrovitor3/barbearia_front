@@ -9,36 +9,26 @@ import {
   Descriptions,
   Table,
   Tag,
-  Avatar,
   Statistic,
   Row,
   Col,
   Empty,
   message,
   Spin,
-  Tooltip,
 } from 'antd';
 import {
   ArrowLeftOutlined,
   UserOutlined,
   CalendarOutlined,
-  SettingOutlined,
   PhoneOutlined,
   MailOutlined,
   GlobalOutlined,
   PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { GetOneEmpresaService } from '../../services/empresaService';
-import FuncionarioModal from '../../components/Modal/FuncionarioModal';
-import type {
-  FuncionarioFormData,
-  FuncionarioInterface,
-} from '../../interfaces/FuncionarioInterface';
-import { CreateFuncionarioService } from '../../services/funcionarioService';
-import FuncionariosTab from '../../components/Tab';
+import type { FuncionarioInterface } from '../../interfaces/FuncionarioInterface';
+import FuncionariosTab from '../../components/Tab/FuncionarioTab';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -54,18 +44,6 @@ interface EmpresaDetalhes {
   email: string;
   website?: string;
   ativo: boolean;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
-}
-
-interface Pessoa {
-  pessoaId: number;
-  cpf: string;
-  nome: string;
-  sobrenome: string;
-  dataNascimento: string;
-  sexo: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
@@ -191,16 +169,6 @@ const EmpresaDetalhes: React.FC = () => {
     },
   ];
 
-  const handleEditFuncionario = (funcionarioId: number) => {
-    console.log('Editar funcionário:', funcionarioId);
-    // Implementar modal de edição
-  };
-
-  const handleDeleteFuncionario = (funcionarioId: number) => {
-    console.log('Excluir funcionário:', funcionarioId);
-    // Implementar confirmação e exclusão
-  };
-
   const getStatusCor = (status: boolean) => (status ? '#52c41a' : '#ff4d4f');
 
   if (loading) {
@@ -256,12 +224,6 @@ const EmpresaDetalhes: React.FC = () => {
             </Title>
             <Text type="secondary">{empresa.razaoSocial}</Text>
           </div>
-          <Space>
-            <Button icon={<SettingOutlined />}>Configurações</Button>
-            <Button type="primary" icon={<PlusOutlined />}>
-              Novo Agendamento
-            </Button>
-          </Space>
         </div>
       </div>
 
