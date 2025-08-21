@@ -10,3 +10,14 @@ export interface AgendamentoInterface
   data: string;
   horario: string;
 }
+
+export interface AgendamentoFormData {
+  clienteId: number;
+  funcionarioId: number;
+  servicoId: number;
+  dataAgendamento: Date;
+  horarioInicio: string;
+  horarioFim: string;
+  valor?: number;
+  observacoes?: string;
+}

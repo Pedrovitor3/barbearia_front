@@ -1,166 +1,88 @@
 import {
-  Modal,
+  Button,
+  DatePicker,
   Form,
   Input,
+  InputNumber,
+  message,
+  Modal,
   Select,
-  DatePicker,
-  TimePicker,
-  Button,
   Space,
-  Divider,
-  Typography,
-  Card,
-  Tag,
+  TimePicker,
 } from 'antd';
-import {
-  UserOutlined,
-  ScissorOutlined,
-  CalendarOutlined,
-  ClockCircleOutlined,
-  DollarOutlined,
-} from '@ant-design/icons';
+import type { AgendamentoFormData } from '../../../interfaces/AgendamentoInterface';
 import dayjs from 'dayjs';
-import type { AgendamentoInterface } from '../../../interfaces/AgendamentoInterface';
-import type { Servico } from '../../../interfaces/ServicoInterface';
-import type { FormValues } from '../../../interfaces/FormData';
-const { Text } = Typography;
-const { Option } = Select;
 
 interface AgendamentoModalProps {
   visible: boolean;
   onCancel: () => void;
-  onConfirm: (values: AgendamentoInterface) => void;
-  barbearia?: string;
+  onSubmit: (values: AgendamentoFormData) => Promise<void>;
+  loading?: boolean;
+  // Dados para os selects - você deve passar estes dados do componente pai
+  clientes?: Array<{ id: number; nome: string }>;
+  funcionarios?: Array<{ id: number; nome: string }>;
+  servicos?: Array<{ id: number; nome: string; preco?: number }>;
 }
-
-interface ResumoCalculado {
-  servicos_info: Servico[];
-  precoTotal: number;
-  duracaoTotal: number;
-}
+const { Option } = Select;
+const { TextArea } = Input;
 
 const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
   visible,
   onCancel,
-  onConfirm,
-  barbearia = 'Barbearia do Jô',
+  onSubmit,
+  loading = false,
+  clientes = [],
+  funcionarios = [],
+  servicos = [],
 }) => {
-  const [form] = Form.useForm<FormValues>();
+  const [form] = Form.useForm();
 
-  // Dados fictícios dos serviços
-  const servicos: Servico[] = [
-    {
-      id: 'corte',
-      nome: 'Corte de Cabelo',
-      preco: 25.0,
-      duracao: 30,
-      descricao: 'Corte masculino tradicional',
-    },
-    {
-      id: 'barba',
-      nome: 'Barba',
-      preco: 15.0,
-      duracao: 20,
-      descricao: 'Aparar e modelar barba',
-    },
-    {
-      id: 'corte-barba',
-      nome: 'Corte + Barba',
-      preco: 35.0,
-      duracao: 45,
-      descricao: 'Pacote completo',
-    },
-    {
-      id: 'sobrancelha',
-      nome: 'Sobrancelha',
-      preco: 10.0,
-      duracao: 15,
-      descricao: 'Design de sobrancelha masculina',
-    },
-    {
-      id: 'lavagem',
-      nome: 'Lavagem + Hidratação',
-      preco: 20.0,
-      duracao: 25,
-      descricao: 'Lavagem e tratamento capilar',
-    },
-  ];
-
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
 
-      // Calcular preço total e duração total
-      const servicosSelecionados = values.servicos
-        .map((id: string) => servicos.find(s => s.id === id))
-        .filter((servico): servico is Servico => servico !== undefined);
-
-      const precoTotal = servicosSelecionados.reduce(
-        (total: number, servico: Servico) => total + servico.preco,
-        0
-      );
-
-      const duracaoTotal = servicosSelecionados.reduce(
-        (total: number, servico: Servico) => total + servico.duracao,
-        0
-      );
-
-      const agendamento: AgendamentoInterface = {
+      // Formatando os dados antes de enviar
+      const formData: AgendamentoFormData = {
         ...values,
-        barbearia,
-        servicosSelecionados,
-        precoTotal,
-        duracaoTotal,
-        data: values.data.format('YYYY-MM-DD'),
-        horario: values.horario.format('HH:mm'),
+        dataAgendamento: values.dataAgendamento.toDate(),
+        horarioInicio: values.horarioInicio.format('HH:mm'),
+        horarioFim: values.horarioFim.format('HH:mm'),
       };
 
-      onConfirm(agendamento);
+      await onSubmit(formData);
       form.resetFields();
+      message.success('Agendamento criado com sucesso!');
     } catch (error) {
-      console.error('Erro na validação:', error);
+      console.error('Erro ao criar agendamento:', error);
+      message.error('Erro ao criar agendamento');
     }
   };
 
-  const handleCancel = (): void => {
+  const handleCancel = () => {
     form.resetFields();
     onCancel();
   };
 
-  const calcularResumo = (): ResumoCalculado => {
-    const servicosSelecionados = form.getFieldValue('servicos') || [];
-    const servicos_info: Servico[] = (servicosSelecionados as string[])
-      .map((id: string): Servico | undefined =>
-        servicos.find((s: Servico) => s.id === id)
-      )
-      .filter(
-        (servico: Servico | undefined): servico is Servico =>
-          servico !== undefined
-      );
-
-    const precoTotal = servicos_info.reduce(
-      (total: number, servico: Servico) => total + servico.preco,
-      0
-    );
-
-    const duracaoTotal = servicos_info.reduce(
-      (total: number, servico: Servico) => total + servico.duracao,
-      0
-    );
-
-    return { servicos_info, precoTotal, duracaoTotal };
+  // Quando um serviço é selecionado, preencher automaticamente o valor
+  const handleServicoChange = (servicoId: number) => {
+    const servico = servicos.find(s => s.id === servicoId);
+    if (servico && servico.preco) {
+      form.setFieldsValue({ valor: servico.preco });
+    }
   };
 
-  const { servicos_info, precoTotal, duracaoTotal } = calcularResumo();
+  // Calcular horário de fim baseado no início + duração estimada
+  const handleHorarioInicioChange = (time: dayjs.Dayjs | null) => {
+    if (time) {
+      // Assumindo 1 hora de duração padrão, você pode ajustar conforme necessário
+      const horarioFim = time.add(1, 'hour');
+      form.setFieldsValue({ horarioFim });
+    }
+  };
 
   return (
     <Modal
-      title={
-        <Space>
-          <CalendarOutlined />
-          <span>Novo Agendamento</span>
-        </Space>
-      }
+      title="Novo Agendamento"
       open={visible}
       onCancel={handleCancel}
       width={600}
@@ -168,177 +90,138 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
         <Button key="cancel" onClick={handleCancel}>
           Cancelar
         </Button>,
-        <Button key="submit" type="primary" onClick={handleSubmit}>
-          Confirmar Agendamento
+        <Button
+          key="submit"
+          type="primary"
+          loading={loading}
+          onClick={handleSubmit}
+        >
+          Salvar Agendamento
         </Button>,
       ]}
     >
-      <div style={{ marginBottom: 16 }}>
-        <Text type="secondary">Agendamento para: </Text>
-        <Text strong>{barbearia}</Text>
-      </div>
-
       <Form form={form} layout="vertical" requiredMark={false}>
-        <Form.Item
-          name="cliente"
-          label={
-            <Space>
-              <UserOutlined />
-              <span>Nome do Cliente</span>
-            </Space>
-          }
-          rules={[
-            { required: true, message: 'Por favor, informe o nome do cliente' },
-            { min: 2, message: 'Nome deve ter pelo menos 2 caracteres' },
-          ]}
-        >
-          <Input placeholder="Digite o nome completo do cliente" size="large" />
-        </Form.Item>
+        <Space.Compact style={{ display: 'flex', width: '100%' }}>
+          <Form.Item
+            name="clienteId"
+            label="Cliente"
+            style={{ flex: 1, marginRight: 8 }}
+            rules={[{ required: true, message: 'Selecione um cliente' }]}
+          >
+            <Select placeholder="Selecione um cliente" showSearch>
+              {clientes.map(cliente => (
+                <Option key={cliente.id} value={cliente.id}>
+                  {cliente.nome}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-        <Form.Item name="telefone" label="Telefone (opcional)">
-          <Input placeholder="(62) 99999-9999" size="large" />
-        </Form.Item>
+          <Form.Item
+            name="funcionarioId"
+            label="Funcionário"
+            style={{ flex: 1 }}
+            rules={[{ required: true, message: 'Selecione um funcionário' }]}
+          >
+            <Select placeholder="Selecione um funcionário">
+              {funcionarios.map(funcionario => (
+                <Option key={funcionario.id} value={funcionario.id}>
+                  {funcionario.nome}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Space.Compact>
 
         <Form.Item
-          name="servicos"
-          label={
-            <Space>
-              <ScissorOutlined />
-              <span>Serviços</span>
-            </Space>
-          }
-          rules={[
-            { required: true, message: 'Selecione pelo menos um serviço' },
-          ]}
+          name="servicoId"
+          label="Serviço"
+          rules={[{ required: true, message: 'Selecione um serviço' }]}
         >
           <Select
-            mode="multiple"
-            placeholder="Selecione os serviços desejados"
-            size="large"
-            onChange={() => form.setFieldsValue({})} // Para atualizar o resumo
+            placeholder="Selecione um serviço"
+            onChange={handleServicoChange}
           >
             {servicos.map(servico => (
               <Option key={servico.id} value={servico.id}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 500 }}>{servico.nome}</div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      {servico.descricao} • {servico.duracao}min
-                    </div>
-                  </div>
-                  <Tag color="blue">R$ {servico.preco.toFixed(2)}</Tag>
-                </div>
+                {servico.nome} {servico.preco && `- R$ ${servico.preco}`}
               </Option>
             ))}
           </Select>
         </Form.Item>
 
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <Form.Item
-            name="data"
-            label={
-              <Space>
-                <CalendarOutlined />
-                <span>Data</span>
-              </Space>
+        <Form.Item
+          name="dataAgendamento"
+          label="Data do Agendamento"
+          rules={[{ required: true, message: 'Selecione uma data' }]}
+        >
+          <DatePicker
+            style={{ width: '100%' }}
+            format="DD/MM/YYYY"
+            placeholder="Selecione a data"
+            disabledDate={current =>
+              current && current < dayjs().startOf('day')
             }
-            rules={[{ required: true, message: 'Selecione a data' }]}
-            style={{ flex: 1 }}
-          >
-            <DatePicker
-              placeholder="Selecione a data"
-              size="large"
-              style={{ width: '100%' }}
-              disabledDate={current =>
-                current && current < dayjs().startOf('day')
-              }
-              format="DD/MM/YYYY"
-            />
-          </Form.Item>
+          />
+        </Form.Item>
 
+        <Space.Compact style={{ display: 'flex', width: '100%' }}>
           <Form.Item
-            name="horario"
-            label={
-              <Space>
-                <ClockCircleOutlined />
-                <span>Horário</span>
-              </Space>
-            }
-            rules={[{ required: true, message: 'Selecione o horário' }]}
-            style={{ flex: 1 }}
+            name="horarioInicio"
+            label="Horário Início"
+            style={{ flex: 1, marginRight: 8 }}
+            rules={[
+              { required: true, message: 'Selecione o horário de início' },
+            ]}
           >
             <TimePicker
-              placeholder="Selecione o horário"
-              size="large"
               style={{ width: '100%' }}
               format="HH:mm"
-              minuteStep={30}
-              showNow={false}
+              placeholder="00:00"
+              onChange={handleHorarioInicioChange}
             />
           </Form.Item>
-        </div>
 
-        <Form.Item name="observacoes" label="Observações (opcional)">
-          <Input.TextArea
+          <Form.Item
+            name="horarioFim"
+            label="Horário Fim"
+            style={{ flex: 1 }}
+            rules={[{ required: true, message: 'Selecione o horário de fim' }]}
+          >
+            <TimePicker
+              style={{ width: '100%' }}
+              format="HH:mm"
+              placeholder="00:00"
+            />
+          </Form.Item>
+        </Space.Compact>
+
+        <Form.Item name="valor" label="Valor (R$)">
+          <InputNumber
+            style={{ width: '100%' }}
+            placeholder="0,00"
+            min={0}
+            precision={2}
+            formatter={value =>
+              `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+            }
+            parser={value =>
+              (parseFloat(
+                value?.replace(/R\$\s?|(\.)/g, '').replace(',', '.') || '0'
+              ) || 0) as 0
+            }
+          />
+        </Form.Item>
+
+        <Form.Item name="observacoes" label="Observações">
+          <TextArea
             rows={3}
-            placeholder="Alguma observação especial sobre o atendimento..."
+            placeholder="Digite observações adicionais sobre o agendamento..."
+            maxLength={500}
+            showCount
           />
         </Form.Item>
       </Form>
-
-      {servicos_info.length > 0 && (
-        <>
-          <Divider />
-          <Card
-            size="small"
-            title={
-              <Space>
-                <DollarOutlined />
-                <span>Resumo do Agendamento</span>
-              </Space>
-            }
-          >
-            <div style={{ marginBottom: 12 }}>
-              <Text strong>Serviços selecionados:</Text>
-              <div style={{ marginTop: 8 }}>
-                {servicos_info.map((servico: Servico) => (
-                  <Tag
-                    key={servico.id}
-                    color="processing"
-                    style={{ marginBottom: 4 }}
-                  >
-                    {servico.nome} - R$ {servico.preco.toFixed(2)}
-                  </Tag>
-                ))}
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: 8,
-              }}
-            >
-              <Text>Duração total:</Text>
-              <Text strong>{duracaoTotal} minutos</Text>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text>Valor total:</Text>
-              <Text strong style={{ fontSize: '16px', color: '#52c41a' }}>
-                R$ {precoTotal.toFixed(2)}
-              </Text>
-            </div>
-          </Card>
-        </>
-      )}
     </Modal>
   );
 };

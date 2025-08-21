@@ -29,6 +29,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { GetOneEmpresaService } from '../../services/empresaService';
 import type { FuncionarioInterface } from '../../interfaces/FuncionarioInterface';
 import FuncionariosTab from '../../components/Tab/FuncionarioTab';
+import AgendamentoTab from '../../components/Tab/AgendamentoTab';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -334,20 +335,7 @@ const EmpresaDetalhes: React.FC = () => {
           tab={`Agendamentos (${agendamentos.length})`}
           key="agendamentos"
         >
-          <div style={{ marginBottom: 16 }}>
-            <Space>
-              <Button type="primary" icon={<PlusOutlined />}>
-                Novo Agendamento
-              </Button>
-              <Button>Filtros</Button>
-            </Space>
-          </div>
-          <Table
-            dataSource={agendamentos}
-            columns={agendamentosColumns}
-            rowKey="agendamentoId"
-            pagination={{ pageSize: 10 }}
-          />
+          <AgendamentoTab empresaId={empresaId ? parseInt(empresaId) : 0} />
         </TabPane>
 
         {/* Serviços */}
