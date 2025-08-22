@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, Space, Table } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
@@ -8,34 +8,29 @@ import {
   type AgendamentoFormData,
   type AgendamentoInterface,
 } from '../../../interfaces/AgendamentoInterface';
+import type { ClienteInterface } from '../../../interfaces/ClienteInterface';
+import type { FuncionarioInterface } from '../../../interfaces/FuncionarioInterface';
+import type { ServicoInterface } from '../../../interfaces/ServicoInterface';
+import { CreateAgendamentoService } from '../../../services/agendamentoService';
 
 type AgendamentoTabProps = {
   empresaId: number;
+  agendamentos: AgendamentoInterface[];
+  clientes: ClienteInterface[];
+  funcionarios: FuncionarioInterface[];
+  servicos: ServicoInterface[];
 };
 
 // Componente AgendamentoTab atualizado
-const AgendamentoTab = ({ empresaId }: AgendamentoTabProps) => {
+const AgendamentoTab = ({
+  empresaId,
+  agendamentos,
+  clientes,
+  funcionarios,
+  servicos,
+}: AgendamentoTabProps) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [agendamentos, setAgendamentos] = useState<AgendamentoInterface[]>([]);
-
-  useEffect(() => {
-    loadAgendamentos();
-  }, []);
-
-  const loadAgendamentos = () => {
-    try {
-      setLoading(true);
-      // const response = await AgendamentoService()
-      setAgendamentos([]);
-      console.log('teest');
-    } catch (error) {
-      console.log('erro load agendamentos', error);
-      throw new Error('erro load agendamentos');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Colunas da tabela
   const agendamentosColumns: ColumnsType<any> = [
@@ -49,16 +44,19 @@ const AgendamentoTab = ({ empresaId }: AgendamentoTabProps) => {
       title: 'Cliente',
       dataIndex: 'clienteNome',
       key: 'clienteNome',
+      render: (_, record) => record.cliente?.pessoa?.nome,
     },
     {
       title: 'Funcionário',
       dataIndex: 'funcionarioNome',
       key: 'funcionarioNome',
+      render: (_, record) => record.funcionario?.pessoa?.nome,
     },
     {
       title: 'Serviço',
       dataIndex: 'servicoNome',
       key: 'servicoNome',
+      render: (_, record) => record.servico?.nome,
     },
     {
       title: 'Data',
@@ -102,10 +100,9 @@ const AgendamentoTab = ({ empresaId }: AgendamentoTabProps) => {
 
   const handleModalSubmit = async (values: AgendamentoFormData) => {
     setLoading(true);
-    const dadosCompletos = { ...values, empresaId };
     try {
-      // Aqui você faria a chamada para sua API
-      console.log('Dados do agendamento:', values);
+      const response = await CreateAgendamentoService(values);
+      console.log('response:', response);
 
       setModalVisible(false);
       // Aqui você atualizaria a lista de agendamentos
@@ -141,9 +138,10 @@ const AgendamentoTab = ({ empresaId }: AgendamentoTabProps) => {
         onCancel={() => setModalVisible(false)}
         onSubmit={handleModalSubmit}
         loading={loading}
-        clientes={[]}
-        funcionarios={[]}
-        servicos={[]}
+        clientes={clientes}
+        funcionarios={funcionarios}
+        servicos={servicos}
+        empresaId={empresaId}
       />
     </div>
   );

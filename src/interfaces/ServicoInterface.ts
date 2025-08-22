@@ -1,7 +1,13 @@
-export interface Servico {
-  id: string;
+export interface ServicoInterface {
+  servicoId: number;
+  empresaId: number;
   nome: string;
-  preco: number;
-  duracao: number;
   descricao: string;
+  duracaoMinutos: number;
+  preco: string;
+  categoria: string;
+  ativo: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date;
 }

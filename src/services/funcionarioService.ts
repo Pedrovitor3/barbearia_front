@@ -10,6 +10,18 @@ export const GetFuncionarioService = async () => {
     throw error;
   }
 };
+export const ListarFuncionarioEmpresaService = async (empresaId: number) => {
+  try {
+    const response = await apiClient.post('/funcionarios', {
+      empresaId,
+    });
+    const funcionariosEmpresa = response.data;
+    return funcionariosEmpresa || [];
+  } catch (error) {
+    console.log('erro ao listar funcionarios da empresa', error);
+    throw error;
+  }
+};
 
 export const CreateFuncionarioService = async (
   novoFuncionario: FuncionarioFormData

@@ -7,7 +7,6 @@ import {
   Space,
   Typography,
   Descriptions,
-  Table,
   Tag,
   Statistic,
   Row,
@@ -23,13 +22,18 @@ import {
   PhoneOutlined,
   MailOutlined,
   GlobalOutlined,
-  PlusOutlined,
 } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
 import { GetOneEmpresaService } from '../../services/empresaService';
 import type { FuncionarioInterface } from '../../interfaces/FuncionarioInterface';
 import FuncionariosTab from '../../components/Tab/FuncionarioTab';
 import AgendamentoTab from '../../components/Tab/AgendamentoTab';
+import type { ClienteInterface } from '../../interfaces/ClienteInterface';
+import { ListarFuncionarioEmpresaService } from '../../services/funcionarioService';
+import { ListarClienteEmpresaService } from '../../services/clienteService';
+import { ListarAgendamentosEmpresaService } from '../../services/agendamentoService';
+import type { AgendamentoInterface } from '../../interfaces/AgendamentoInterface';
+import type { ServicoInterface } from '../../interfaces/ServicoInterface';
+import { ListarServicosEmpresaService } from '../../services/servicoService';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -50,28 +54,15 @@ interface EmpresaDetalhes {
   deletedAt?: string;
 }
 
-interface Agendamento {
-  agendamentoId: number;
-  clienteNome: string;
-  funcionarioNome: string;
-  servico: string;
-  dataHora: string;
-  status:
-    | 'agendado'
-    | 'confirmado'
-    | 'em_andamento'
-    | 'concluido'
-    | 'cancelado';
-  valor: number;
-}
-
 const EmpresaDetalhes: React.FC = () => {
   const { empresaId } = useParams<{ empresaId: string }>();
   const navigate = useNavigate();
 
   const [empresa, setEmpresa] = useState<EmpresaDetalhes | null>(null);
   const [funcionarios, setFuncionarios] = useState<FuncionarioInterface[]>([]);
-  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [agendamentos, setAgendamentos] = useState<AgendamentoInterface[]>([]);
+  const [clientes, setClientes] = useState<ClienteInterface[]>([]);
+  const [servicos, setServicos] = useState<ServicoInterface[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -84,14 +75,24 @@ const EmpresaDetalhes: React.FC = () => {
 
   const loadEmpresaData = async () => {
     if (!empresaId) return;
-
+    const empresaIdNumber = parseInt(empresaId);
     try {
       setLoading(true);
       const empresaData = await GetOneEmpresaService(empresaId);
-      console.log('Dados da empresa:', empresaData);
-      setEmpresa(empresaData.empresa);
-      setFuncionarios(empresaData?.funcionarios);
-      // setAgendamentos(empresaData?.agendamentos);
+      const funcionarioEmpresa =
+        await ListarFuncionarioEmpresaService(empresaIdNumber);
+      const clientesEmpresa =
+        await ListarClienteEmpresaService(empresaIdNumber);
+      const agendamentosEmpresa =
+        await ListarAgendamentosEmpresaService(empresaIdNumber);
+      const servicosEmpresa =
+        await ListarServicosEmpresaService(empresaIdNumber);
+
+      setEmpresa(empresaData);
+      setFuncionarios(funcionarioEmpresa);
+      setClientes(clientesEmpresa);
+      setAgendamentos(agendamentosEmpresa.data);
+      setServicos(servicosEmpresa);
     } catch (error) {
       console.error('Erro geral ao carregar dados:', error);
       message.error('Erro ao carregar dados da empresa');
@@ -99,76 +100,6 @@ const EmpresaDetalhes: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // Colunas da tabela de agendamentos
-  const agendamentosColumns: ColumnsType<Agendamento> = [
-    {
-      title: 'Cliente',
-      dataIndex: 'clienteNome',
-      key: 'clienteNome',
-    },
-    {
-      title: 'Funcionário',
-      dataIndex: 'funcionarioNome',
-      key: 'funcionarioNome',
-    },
-    {
-      title: 'Serviço',
-      dataIndex: 'servico',
-      key: 'servico',
-    },
-    {
-      title: 'Data/Hora',
-      dataIndex: 'dataHora',
-      key: 'dataHora',
-      render: (dataHora: string) => {
-        const date = new Date(dataHora);
-        return (
-          <div>
-            <div>{date.toLocaleDateString('pt-BR')}</div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
-              {date.toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        const colors = {
-          agendado: 'blue',
-          confirmado: 'green',
-          em_andamento: 'orange',
-          concluido: 'purple',
-          cancelado: 'red',
-        };
-        const labels = {
-          agendado: 'Agendado',
-          confirmado: 'Confirmado',
-          em_andamento: 'Em Andamento',
-          concluido: 'Concluído',
-          cancelado: 'Cancelado',
-        };
-        return (
-          <Tag color={colors[status as keyof typeof colors]}>
-            {labels[status as keyof typeof labels]}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Valor',
-      dataIndex: 'valor',
-      key: 'valor',
-      render: (valor: number) => `R$ ${valor.toFixed(2)}`,
-    },
-  ];
 
   const getStatusCor = (status: boolean) => (status ? '#52c41a' : '#ff4d4f');
 
@@ -305,8 +236,8 @@ const EmpresaDetalhes: React.FC = () => {
                 <Card>
                   <Statistic
                     title="Receita do Dia"
-                    value={agendamentos.reduce(
-                      (acc, curr) => acc + curr.valor,
+                    value={agendamentos?.reduce(
+                      (acc, curr) => acc + curr.precoTotal,
                       0
                     )}
                     prefix="R$"
@@ -335,7 +266,13 @@ const EmpresaDetalhes: React.FC = () => {
           tab={`Agendamentos (${agendamentos.length})`}
           key="agendamentos"
         >
-          <AgendamentoTab empresaId={empresaId ? parseInt(empresaId) : 0} />
+          <AgendamentoTab
+            empresaId={empresaId ? parseInt(empresaId) : 0}
+            agendamentos={agendamentos}
+            clientes={clientes}
+            funcionarios={funcionarios}
+            servicos={servicos}
+          />
         </TabPane>
 
         {/* Serviços */}

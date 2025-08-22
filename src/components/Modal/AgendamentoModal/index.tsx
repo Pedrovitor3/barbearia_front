@@ -12,17 +12,21 @@ import {
 } from 'antd';
 import type { AgendamentoFormData } from '../../../interfaces/AgendamentoInterface';
 import dayjs from 'dayjs';
+import type { FuncionarioInterface } from '../../../interfaces/FuncionarioInterface';
+import type { ClienteInterface } from '../../../interfaces/ClienteInterface';
+import type { ServicoInterface } from '../../../interfaces/ServicoInterface';
 
 interface AgendamentoModalProps {
   visible: boolean;
   onCancel: () => void;
   onSubmit: (values: AgendamentoFormData) => Promise<void>;
   loading?: boolean;
-  // Dados para os selects - você deve passar estes dados do componente pai
-  clientes?: Array<{ id: number; nome: string }>;
-  funcionarios?: Array<{ id: number; nome: string }>;
-  servicos?: Array<{ id: number; nome: string; preco?: number }>;
+  clientes?: ClienteInterface[];
+  funcionarios?: FuncionarioInterface[];
+  servicos?: ServicoInterface[];
+  empresaId: number;
 }
+
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -34,6 +38,7 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
   clientes = [],
   funcionarios = [],
   servicos = [],
+  empresaId,
 }) => {
   const [form] = Form.useForm();
 
@@ -41,20 +46,90 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
     try {
       const values = await form.validateFields();
 
-      // Formatando os dados antes de enviar
+      console.log('Valores do formulário RAW:', values);
+
+      // Validação mais rigorosa
+      if (!values.dataAgendamento) {
+        message.error('Selecione uma data');
+        return;
+      }
+
+      if (!values.horarioInicio) {
+        message.error('Selecione o horário de início');
+        return;
+      }
+
+      if (!values.horarioFim) {
+        message.error('Selecione o horário de fim');
+        return;
+      }
+
+      let dataAgendamentoString: string;
+      let horarioInicioFormatado: string;
+      let horarioFimFormatado: string;
+
+      try {
+        const dataObj = dayjs.isDayjs(values.dataAgendamento)
+          ? values.dataAgendamento
+          : dayjs(values.dataAgendamento);
+
+        const horarioInicioObj = dayjs.isDayjs(values.horarioInicio)
+          ? values.horarioInicio
+          : dayjs(values.horarioInicio);
+
+        const horarioFimObj = dayjs.isDayjs(values.horarioFim)
+          ? values.horarioFim
+          : dayjs(values.horarioFim);
+
+        if (!dataObj.isValid()) throw new Error('Data inválida');
+        if (!horarioInicioObj.isValid())
+          throw new Error('Horário de início inválido');
+        if (!horarioFimObj.isValid())
+          throw new Error('Horário de fim inválido');
+
+        // Agora sim, string YYYY-MM-DD
+        dataAgendamentoString = dataObj.format('YYYY-MM-DD');
+        horarioInicioFormatado = horarioInicioObj.format('HH:mm');
+        horarioFimFormatado = horarioFimObj.format('HH:mm');
+
+        console.log('Data formatada:', dataAgendamentoString);
+        console.log('Horário início formatado:', horarioInicioFormatado);
+        console.log('Horário fim formatado:', horarioFimFormatado);
+      } catch (error) {
+        console.error('Erro ao formatar datas/horários:', error);
+        message.error('Erro ao processar data ou horários');
+        return;
+      }
+
+      // Montar dados finais - enviando como string YYYY-MM-DD
       const formData: AgendamentoFormData = {
-        ...values,
-        dataAgendamento: values.dataAgendamento.toDate(),
-        horarioInicio: values.horarioInicio.format('HH:mm'),
-        horarioFim: values.horarioFim.format('HH:mm'),
+        clienteId: Number(values.clienteId),
+        funcionarioId: Number(values.funcionarioId),
+        servicoId: Number(values.servicoId),
+        dataAgendamento: dataAgendamentoString, // String ao invés de Date
+        horarioInicio: horarioInicioFormatado,
+        horarioFim: horarioFimFormatado,
+        valor: values.valor ? Number(values.valor) : undefined,
+        observacoes: values.observacoes || undefined,
+        empresaId,
       };
+
+      console.log('Dados finais para envio:', formData);
 
       await onSubmit(formData);
       form.resetFields();
       message.success('Agendamento criado com sucesso!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar agendamento:', error);
-      message.error('Erro ao criar agendamento');
+
+      // Melhor tratamento de erro
+      if (error?.response?.data?.message) {
+        message.error(`Erro: ${error.response.data.message}`);
+      } else if (error?.message) {
+        message.error(`Erro: ${error.message}`);
+      } else {
+        message.error('Erro ao criar agendamento');
+      }
     }
   };
 
@@ -65,19 +140,42 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
 
   // Quando um serviço é selecionado, preencher automaticamente o valor
   const handleServicoChange = (servicoId: number) => {
-    const servico = servicos.find(s => s.id === servicoId);
+    const servico = servicos.find(s => s.servicoId === servicoId);
     if (servico && servico.preco) {
-      form.setFieldsValue({ valor: servico.preco });
+      // Converter string para number se necessário
+      const preco =
+        typeof servico.preco === 'string'
+          ? parseFloat(servico.preco)
+          : servico.preco;
+      form.setFieldsValue({ valor: preco });
     }
   };
 
   // Calcular horário de fim baseado no início + duração estimada
   const handleHorarioInicioChange = (time: dayjs.Dayjs | null) => {
-    if (time) {
-      // Assumindo 1 hora de duração padrão, você pode ajustar conforme necessário
-      const horarioFim = time.add(1, 'hour');
+    if (time && dayjs(time).isValid()) {
+      // Assumindo 1 hora de duração padrão
+      const horarioFim = dayjs(time).add(1, 'hour');
       form.setFieldsValue({ horarioFim });
     }
+  };
+
+  // Validação customizada para horários
+  const validateHorarios = () => {
+    const horarioInicio = form.getFieldValue('horarioInicio');
+    const horarioFim = form.getFieldValue('horarioFim');
+
+    if (horarioInicio && horarioFim) {
+      const inicio = dayjs(horarioInicio);
+      const fim = dayjs(horarioFim);
+
+      if (inicio.isValid() && fim.isValid() && fim.isBefore(inicio)) {
+        return Promise.reject(
+          new Error('Horário de fim deve ser após o horário de início')
+        );
+      }
+    }
+    return Promise.resolve();
   };
 
   return (
@@ -110,8 +208,8 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
           >
             <Select placeholder="Selecione um cliente" showSearch>
               {clientes.map(cliente => (
-                <Option key={cliente.id} value={cliente.id}>
-                  {cliente.nome}
+                <Option key={cliente.clienteId} value={cliente.clienteId}>
+                  {cliente.pessoa?.nome || `Cliente ${cliente.clienteId}`}
                 </Option>
               ))}
             </Select>
@@ -125,8 +223,12 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
           >
             <Select placeholder="Selecione um funcionário">
               {funcionarios.map(funcionario => (
-                <Option key={funcionario.id} value={funcionario.id}>
-                  {funcionario.nome}
+                <Option
+                  key={funcionario.funcionarioId}
+                  value={funcionario.funcionarioId}
+                >
+                  {funcionario.pessoa?.nome ||
+                    `Funcionário ${funcionario.funcionarioId}`}
                 </Option>
               ))}
             </Select>
@@ -143,7 +245,7 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
             onChange={handleServicoChange}
           >
             {servicos.map(servico => (
-              <Option key={servico.id} value={servico.id}>
+              <Option key={servico.servicoId} value={servico.servicoId}>
                 {servico.nome} {servico.preco && `- R$ ${servico.preco}`}
               </Option>
             ))}
@@ -153,7 +255,17 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
         <Form.Item
           name="dataAgendamento"
           label="Data do Agendamento"
-          rules={[{ required: true, message: 'Selecione uma data' }]}
+          rules={[
+            { required: true, message: 'Selecione uma data' },
+            {
+              validator: (_, value) => {
+                if (value && !dayjs(value).isValid()) {
+                  return Promise.reject(new Error('Data inválida'));
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
         >
           <DatePicker
             style={{ width: '100%' }}
@@ -172,6 +284,14 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
             style={{ flex: 1, marginRight: 8 }}
             rules={[
               { required: true, message: 'Selecione o horário de início' },
+              {
+                validator: (_, value) => {
+                  if (value && !dayjs(value).isValid()) {
+                    return Promise.reject(new Error('Horário inválido'));
+                  }
+                  return Promise.resolve();
+                },
+              },
             ]}
           >
             <TimePicker
@@ -179,6 +299,7 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
               format="HH:mm"
               placeholder="00:00"
               onChange={handleHorarioInicioChange}
+              minuteStep={15} // Intervalos de 15 minutos
             />
           </Form.Item>
 
@@ -186,17 +307,43 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
             name="horarioFim"
             label="Horário Fim"
             style={{ flex: 1 }}
-            rules={[{ required: true, message: 'Selecione o horário de fim' }]}
+            rules={[
+              { required: true, message: 'Selecione o horário de fim' },
+              {
+                validator: (_, value) => {
+                  if (value && !dayjs(value).isValid()) {
+                    return Promise.reject(new Error('Horário inválido'));
+                  }
+                  return validateHorarios();
+                },
+              },
+            ]}
           >
             <TimePicker
               style={{ width: '100%' }}
               format="HH:mm"
               placeholder="00:00"
+              minuteStep={15} // Intervalos de 15 minutos
             />
           </Form.Item>
         </Space.Compact>
 
-        <Form.Item name="valor" label="Valor (R$)">
+        <Form.Item
+          name="valor"
+          label="Valor (R$)"
+          rules={[
+            {
+              validator: (_, value) => {
+                if (value && (isNaN(value) || value < 0)) {
+                  return Promise.reject(
+                    new Error('Valor deve ser um número positivo')
+                  );
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
           <InputNumber
             style={{ width: '100%' }}
             placeholder="0,00"
@@ -205,11 +352,12 @@ const AgendamentoModal: React.FC<AgendamentoModalProps> = ({
             formatter={value =>
               `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
             }
-            parser={value =>
-              (parseFloat(
-                value?.replace(/R\$\s?|(\.)/g, '').replace(',', '.') || '0'
-              ) || 0) as 0
-            }
+            // parser={value => {
+            //   const parsed = parseFloat(
+            //     value?.replace(/R\$\s?|(\.)/g, '').replace(',', '.') || '0'
+            //   );
+            //   return isNaN(parsed) ? 0 : parsed;
+            // }}
           />
         </Form.Item>
 
